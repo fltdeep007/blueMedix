@@ -1,0 +1,50 @@
+# Root-level dependencies
+node_modules/
+.env
+.env.*.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Editor-specific
+.vscode/
+.idea/
+
+# npm & yarn
+package-lock.json
+yarn.lock
+
+# Build outputs (client)
+client/build/
+client/node_modules/
+client/.env
+client/.env.*.local
+
+# Build outputs (server)
+server/node_modules/
+server/dist/
+server/.env
+server/.env.*.local
+
+# Test coverage
+coverage/
+
+# Others
+*.local
+*.cache
+*.gz
+
+# MongoDB dump files
+dump/
+
+# Optional: Ignore uploads or temp folders
+uploads/
+tmp/
