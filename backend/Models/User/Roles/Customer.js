@@ -1,4 +1,3 @@
-// models/Customer.js
 const User = require('./User');
 const mongoose = require('mongoose');
 
