@@ -48,3 +48,5 @@ dump/
 # Optional: Ignore uploads or temp folders
 uploads/
 tmp/
+
+backend/seeder.py
