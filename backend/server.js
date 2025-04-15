@@ -22,9 +22,9 @@ app.use('/api/products', productRoutes);
 app.use('/api/seller', sellerRoutes); 
 
 app.get('/', (req, res) => {
-  res.send('🟢 Server is running!');
+  res.send('Server is running!');
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server listening on port ${PORT}`);
+  console.log(`Server listening on port ${PORT}`);
 });
