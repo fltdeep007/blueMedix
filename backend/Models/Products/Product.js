@@ -39,11 +39,6 @@ const productSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category', 
   },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Seller',
-    required: true
-  }
 }, {
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' }
 });

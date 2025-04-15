@@ -1,6 +1,6 @@
 # Root-level dependencies
 node_modules/
-.env
+backend/.env
 .env.*.local
 
 # Logs

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const baseOptions = {
   discriminatorKey: 'role',
   timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' },
+  collection: 'Users',
 };
 
 const userSchema = new mongoose.Schema({
@@ -54,10 +55,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-  },
-  password: {
-    type: String,
-    required: true,
   },
   phone_no: {
     type: Number,

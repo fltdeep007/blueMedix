@@ -1,4 +1,4 @@
-const User = require('./User');
+const User = require('../User');
 const mongoose = require('mongoose');
 
 const regionalAdminSchema = new mongoose.Schema({
