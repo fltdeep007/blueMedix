@@ -1,0 +1,15 @@
+const express = require('express');
+const router = express.Router();
+const adminController = require('../Controllers/adminController');
+const { authenticate } = require('../middleware/authMiddleware');
+
+// Protect all routes with authentication middleware
+router.use(authenticate);
+
+// Regional Admin routes
+router.get('/regional-admins', adminController.getRegionalAdmins);
+router.get('/regional-admins/pending', adminController.getPendingRegionalAdmins);
+router.put('/regional-admins/:adminId/approve', adminController.approveRegionalAdmin);
+router.put('/regional-admins/:adminId/decline', adminController.declineRegionalAdmin);
+
+module.exports = router;

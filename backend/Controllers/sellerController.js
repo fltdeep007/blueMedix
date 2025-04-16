@@ -1,4 +1,4 @@
-const {getSellers, addSeller, getSellerById} = require("../Services/sellerService");
+const {getSellers, addSeller, getSellerById} = require("../Services/sellerServices");
 
 const getAllSellers = async (req, res) => {
     try {

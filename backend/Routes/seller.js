@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const data = require("../db/data.json"); // Simulated in-memory database of sellers
+// const data = require("../db/data.json"); // Simulated in-memory database of sellers
 
 const { getAllSellers, addNewSeller, getSeller} = require("../Controllers/sellerController");
 
