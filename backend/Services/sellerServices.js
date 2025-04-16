@@ -1,40 +1,40 @@
-const getAllSellers = async (req, res) => {
-    try {
-        const sellers = await Seller.find();
-        res.status(200).json(sellers);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+const User = require("../Models/User/User");
+
+/**
+ * Get all sellers from the database
+ * @returns {Promise<Array>} Array of seller documents
+ */
+const getSellers = async () => {
+  try {
+    // Find all users with the role of 'Seller'
+    const sellers = await User.find({ role: 'Seller' });
+    return sellers;
+  } catch (error) {
+    throw new Error(`Error fetching sellers: ${error.message}`);
+  }
 };
 
-const getSellerById = async (req, res) => {
-    const { sellerId } = req.params;
-
-    try {
-        const seller = await Seller.findById(sellerId);
-        if (!seller) {
-            return res.status(404).json({ message: 'Seller not found' });
-        }
-        res.status(200).json(seller);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+/**
+ * Get a seller by ID
+ * @param {string} sellerId - The ID of the seller to find
+ * @returns {Promise<Object>} The seller document
+ */
+const getSellerById = async (sellerId) => {
+  try {
+    // Validate MongoDB ObjectId format
+    if (!sellerId.match(/^[0-9a-fA-F]{24}$/)) {
+      throw new Error('Invalid seller ID format');
     }
-};
-
-const addSeller = async (req, res) => {
-    const sellerData = req.body;
-
-    try {
-        const seller = new Seller(sellerData);
-        await seller.save();
-        res.status(201).json(seller);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    
+    // Find a user with both the role of 'Seller' and the matching ID
+    const seller = await User.findOne({ _id: sellerId, role: 'Seller' });
+    return seller;
+  } catch (error) {
+    throw new Error(`Error fetching seller: ${error.message}`);
+  }
 };
 
 module.exports = {
-    getAllSellers,
-    getSellerById,
-    addSeller
+  getSellers,
+  getSellerById
 };

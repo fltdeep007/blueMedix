@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 // const data = require("../db/data.json"); // Simulated in-memory database of sellers
 
-const { getAllSellers, addNewSeller, getSeller} = require("../Controllers/sellerController");
+const { getAllSellers,  getSeller} = require("../Controllers/sellerController");
 
 /**
  * Route: POST /add
@@ -13,7 +13,7 @@ const { getAllSellers, addNewSeller, getSeller} = require("../Controllers/seller
  *   - JSON message confirming the seller addition.
  *   - The added seller's data.
  */
-router.post("/add", addNewSeller); 
+// router.post("/add", addNewSeller); 
 
 /**
  * Route: GET /list
@@ -21,7 +21,7 @@ router.post("/add", addNewSeller);
  * Return Value:
  *   - JSON array of all sellers.
  */
-router.get("/", getAllSellers); // Return all sellers
+router.get('/', getAllSellers);
 
 /**
  * Route: GET /:sellerId
