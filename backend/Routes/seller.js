@@ -23,6 +23,8 @@ const { getAllSellers,  getSeller} = require("../Controllers/sellerController");
  */
 router.get('/', getAllSellers);
 
+
+
 /**
  * Route: GET /:sellerId
  * Functionality: Retrieves a specific seller by ID.

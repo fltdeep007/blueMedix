@@ -9,7 +9,11 @@ const sellerSchema = new mongoose.Schema({
   complaints: {
     type: String,
     default: '',
-  }
+  },
+  orders: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Order'
+  }]
 });
 
 const Seller = User.discriminator('Seller', sellerSchema);

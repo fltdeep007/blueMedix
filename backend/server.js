@@ -33,9 +33,9 @@ connectDB();
 app.use('/api/regional-admin', regAdminRoutes); // For RegionalAdmin endpoints approval / deny / view etc
 app.use('/api/regionalAdmin' , superAdmin ) // For super admin to view / reject / accept regional admin signups
 app.use('/api/auth' , authRoutes)
-app.use('/api/login', cartRoutes); 
-app.use('/api/cart', cartRoutes); 
-app.use('/api/orders', orderRoutes)
+// app.use('/api/login', cartRoutes); 
+app.use('/api/cart', cartRoutes);  // working all
+app.use('/api/orders', orderRoutes) 
 app.use('/api/products', productRoutes);
 app.use('/api/seller', sellerRoutes); 
 
