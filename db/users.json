@@ -1,0 +1,185 @@
+[
+  {
+    "id": "user01",
+    "name": "John Doe",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Male",
+    "date_of_birth": "1990-01-01",
+    "e_mail": "johndoe@example.com",
+    "phone_no": "9876543210",
+    "region": "Bihar",
+    "address": {
+      "first_line": "123 Main St",
+      "second_line": "Apt 4B",
+      "city": "Patna",
+      "state": "Bihar",
+      "pin_code": "800001"
+    }
+  },
+  {
+    "id": "user02",
+    "name": "Jane Smith",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Female",
+    "date_of_birth": "1992-05-15",
+    "e_mail": "jane@example.com",
+    "phone_no": "9876543211",
+    "region": "Delhi",
+    "address": {
+      "first_line": "456 High Rd",
+      "second_line": "Floor 2",
+      "city": "Delhi",
+      "state": "Delhi",
+      "pin_code": "110001"
+    }
+  },
+  {
+    "id": "user03",
+    "name": "Ravi Kumar",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Male",
+    "date_of_birth": "1988-09-10",
+    "e_mail": "ravi.kumar@example.com",
+    "phone_no": "9876543212",
+    "region": "Uttar Pradesh",
+    "address": {
+      "first_line": "7 Gandhi Nagar",
+      "second_line": "Near Park",
+      "city": "Lucknow",
+      "state": "Uttar Pradesh",
+      "pin_code": "226001"
+    }
+  },
+
+ {
+    "id": "user04",
+    "name": "Sneha Iyer",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Female",
+    "date_of_birth": "1995-02-18",  
+    "e_mail": "sneha.iyer@example.com",
+    "phone_no": "9876543213",
+    "region": "Maharashtra",
+    "address": {
+      "first_line": "89 Hill Road",
+      "second_line": "Flat 7A",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pin_code": "400050"
+    }
+  },
+  {
+    "id": "user05",
+    "name": "Amit Shah", 
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Male",
+    "date_of_birth": "1985-12-30",
+    "e_mail": "amit.shah@example.com",
+    "phone_no": "9876543214",
+    "region": "Gujarat",
+    "address": {
+      "first_line": "12 Patel Nagar",
+      "second_line": "Sector 4",
+      "city": "Ahmedabad",
+      "state": "Gujarat", 
+      "pin_code": "380015"
+    }
+  },
+  {
+    "id": "user06",
+    "name": "Neha Verma",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Female",
+    "date_of_birth": "1991-03-14",
+    "e_mail": "neha.verma@example.com",
+    "phone_no": "9876543215", 
+    "region": "Punjab",
+    "address": {
+      "first_line": "5 Model Town",
+      "second_line": "House 21",
+      "city": "Ludhiana",
+      "state": "Punjab",  
+      "pin_code": "141001"
+    }
+   }
+  },
+  {
+    "id": "user07",
+    "name": "Arjun Mehta",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Male",
+    "date_of_birth": "1987-07-22",
+    "e_mail": "arjun.mehta@example.com",
+    "phone_no": "9876543216",
+    "region": "Rajasthan",
+    "address": {
+      "first_line": "21 Jaipur Lane",
+      "second_line": "Block C",
+      "city": "Jaipur",
+      "state": "Rajasthan",
+      "pin_code": "302001"
+    }
+  },
+  {
+    "id": "user08",
+    "name": "Priya Das", 
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Female",
+    "date_of_birth": "1994-06-01",
+    "e_mail": "priya.das@example.com",
+    "phone_no": "9876543217",
+    "region": "West Bengal",
+    "address": {
+      "first_line": "88 Lake Gardens",
+      "second_line": "Apt 3C",
+      "city": "Kolkata",  
+      "state": "West Bengal",
+      "pin_code": "700045"
+    }
+  },
+  {
+    "id": "user09",
+    "name": "Karan Malhotra",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Male",
+    "date_of_birth": "1989-08-09",
+    "e_mail": "karan.m@example.com",
+    "phone_no": "9876543218",
+    "region": "Haryana",
+    "address": {
+      "first_line": "17 Sector 15",
+      "second_line": "Near Mall",
+      "city": "Gurgaon",  
+      "state": "Haryana", 
+      "pin_code": "122001"
+  }
+  },
+  {
+    "id": "user10",
+    "name": "Ayesha Khan",
+    "password": "123456",
+    "role": "Customer",
+    "gender": "Female",
+    "date_of_birth": "1996-11-19",
+    "e_mail": "ayesha.khan@example.com",
+    "phone_no": "9876543219",
+    "region": "Telangana",
+    "address": {
+      "first_line": "14 Banjara Hills",
+      "second_line": "Suite 5C",
+      "city": "Hyderabad", 
+      "state": "Telangana",
+      "pin_code": "500034"
+    }
+  }
+]
+    
