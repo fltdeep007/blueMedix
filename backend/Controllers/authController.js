@@ -245,7 +245,8 @@ exports.registerUser = async (req, res) => {
         newUser = await Seller.create({
           ...userData,
           desc: req.body.desc || "",
-          complaints : req.body.complaints || ""
+          complaints : req.body.complaints || "",
+          orders: [] 
         });
 
         await notifyRegionalAdmin(newUser, region);

@@ -7,8 +7,8 @@ const { authenticate } = require('../middleware/authMiddleware');
 router.use(authenticate);
 
 // Regional Admin routes
-router.get('/regional-admins', adminController.getRegionalAdmins);
-router.get('/regional-admins/pending', adminController.getPendingRegionalAdmins);
+router.get('/regional-admins', adminController.getRegionalAdmins); // to fetch all approved admins 
+router.get('/regional-admins/pending', adminController.getPendingRegionalAdmins); // to fetch all pending admins 
 router.put('/regional-admins/:adminId/approve', adminController.approveRegionalAdmin);
 router.put('/regional-admins/:adminId/decline', adminController.declineRegionalAdmin);
 
