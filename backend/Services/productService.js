@@ -1,14 +1,24 @@
 const Product = require('../Models/Products/Product');
 const Seller = require('../Models/User/Roles/Seller');
+const Category = require('../Models/Products/Category');
 
 const getAllProducts = async () => {
   try {
-    const products = await Product.find();
-    return { success: true, products };
+    const products = await Product.find().populate('category', 'name');
+
+    const formattedProducts = products.map(product => {
+      const prod = product.toObject(); // convert Mongoose doc to plain object
+      prod.category = prod.category?.name || null; // replace category object with name
+      return prod;
+    });
+
+    return { success: true, products: formattedProducts };
   } catch (error) {
     return { success: false, message: error.message };
   }
 };
+
+
 
 const getProductById = async (productId) => {
     try {

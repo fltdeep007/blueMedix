@@ -2,6 +2,7 @@ const Order = require('../Models/Products/Order');
 const User = require('../Models/User/User');
 const Seller = require('../Models/User/Roles/Seller');
 const Product = require('../Models/Products/Product');
+const Transaction = require('../Models/Misc/Transaction')
 
 /**
  * Create order with pincode matching logic (no cart dependency)
@@ -13,69 +14,69 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
     if (!customer) {
       return { success: false, message: "Customer not found" };
     }
-
+    
     // Get customer's pincode
     const customerPincode = customer.address.pin_code;
-    
+        
     // Find sellers with matching pincode
     const availableSellers = await Seller.find({
       'address.pin_code': customerPincode,
       'verification_status': 'approved',
       'is_verified': true
     }).lean();
-    
+        
     if (availableSellers.length === 0) {
-      return { 
-        success: false, 
-        message: "No verified sellers available in your pincode area" 
+      return {
+        success: false,
+        message: "No verified sellers available in your pincode area"
       };
     }
-    
+        
     // Get an available seller (for now, just take the first one)
     const sellerId = availableSellers[0]._id;
-    
+        
     // Validate products array
     if (!products || !Array.isArray(products) || products.length === 0) {
       return { success: false, message: "No products provided for order" };
     }
-    
+        
     console.log("Products received:", JSON.stringify(products)); // Debug log
-    
+        
     // Validate products and get their details
     const orderItems = [];
     let totalPrice = 0;
-    
+        
     for (const item of products) {
       // Check if productId exists
       if (!item.productId) {
-        return { 
-          success: false, 
-          message: "Product ID is missing in one of the products" 
+        return {
+          success: false,
+          message: "Product ID is missing in one of the products"
         };
       }
-      
+            
       console.log(`Looking up product with ID: ${item.productId}`); // Debug log
-      
+            
       const product = await Product.findById(item.productId);
       if (!product) {
-        return { 
-          success: false, 
-          message: `Product with ID ${item.productId} not found` 
+        return {
+          success: false,
+          message: `Product with ID ${item.productId} not found`
         };
       }
-      
+            
       // Handle Decimal128 properly
       const productPrice = parseFloat(product.price.toString());
       const itemPrice = productPrice * item.quantity;
       totalPrice += itemPrice;
-      
+            
       orderItems.push({
         product: product._id,
         quantity: item.quantity,
         price: productPrice
       });
     }
-    
+        
     // Create new order
     const newOrder = new Order({
       customer: userId,
@@ -100,19 +101,33 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
         description: 'Order placed successfully'
       }]
     });
+        
+    const savedOrder = await newOrder.save();
     
-    await newOrder.save();
     await Seller.findByIdAndUpdate(
       sellerId,
-      { $push: { orders: newOrder._id } },
+      { $push: { orders: savedOrder._id } },
       { new: true }
     );
     
+    // Create transaction records for each product in the order
+    const transactionPromises = orderItems.map(item => {
+      const transaction = new Transaction({
+        order: savedOrder._id,
+        product: item.product,
+        quantity: item.quantity,
+        eventId: 'order_placed',
+        timestamp: new Date()
+      });
+      return transaction.save();
+    });
     
+    await Promise.all(transactionPromises);
+           
     return {
-      success: true, 
+      success: true,
       message: "Order placed successfully",
-      order: newOrder,
+      order: savedOrder,
       seller: {
         name: availableSellers[0].name,
         email: availableSellers[0].e_mail,
@@ -128,7 +143,6 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
     };
   }
 };
-
 /**
  * Get orders by seller ID with optional status filtering
  */
@@ -406,6 +420,125 @@ const cancelOrder = async (orderId) => {
   }
 };
 
+const getTopSellingProductsInMonth = async (year, month) => {
+  try {
+    // Create date range for the specified month
+    const startDate = new Date(year, month - 1, 1); // Month is 0-indexed in JavaScript Date
+    const endDate = new Date(year, month, 0); // Last day of the month
+    
+    // Aggregate to find top selling products
+    const topProducts = await Transaction.aggregate([
+      // Match transactions within the date range and only order_placed events
+      {
+        $match: {
+          timestamp: { $gte: startDate, $lte: endDate },
+          eventId: 'order_placed'
+        }
+      },
+      // Group by product and sum quantities
+      {
+        $group: {
+          _id: '$product',
+          totalQuantity: { $sum: '$quantity' }
+        }
+      },
+      // Sort by total quantity in descending order
+      {
+        $sort: { totalQuantity: -1 }
+      },
+      // Limit to top 5
+      {
+        $limit: 5
+      },
+      // Lookup product details
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      // Unwind the product details array
+      {
+        $unwind: '$productDetails'
+      },
+      // Project only needed fields
+      {
+        $project: {
+          _id: 0,
+          productId: '$_id',
+          name: '$productDetails.name',
+          totalQuantity: 1,
+          totalRevenue: { $multiply: ['$totalQuantity', { $toDouble: '$productDetails.price' }] }
+        }
+      }
+    ]);
+    
+    return {
+      success: true,
+      month: new Date(year, month - 1).toLocaleString('default', { month: 'long' }),
+      year: year,
+      products: topProducts
+    };
+  } catch (error) {
+    console.error("Error fetching top selling products:", error);
+    return {
+      success: false,
+      message: "Failed to fetch top selling products",
+      error: error.message
+    };
+  }
+}; 
+
+const getSellerOrderById = async (sellerId, orderId) => {
+  try {
+    // Check if seller exists
+    const seller = await Seller.findById(sellerId);
+    if (!seller) {
+      return {
+        success: false,
+        message: "Seller not found"
+      };
+    }
+
+    // Find the order
+    const order = await Order.findById(orderId)
+      .populate('customer', 'name email phone address')
+      .populate('items.product', 'name image price description category')
+      // .populate('seller', 'name email phone address')
+      // .populate('transaction');
+
+    // If no order found
+    if (!order) {
+      return {
+        success: false,
+        message: "Order not found"
+      };
+    }
+
+    // Verify that the order belongs to this seller
+    if (order.seller._id.toString() !== sellerId) {
+      return {
+        success: false,
+        message: "Order does not belong to this seller"
+      };
+    }
+
+    return {
+      success: true,
+      data: order
+    };
+  } catch (error) {
+    console.error("Error in getSellerOrderById:", error);
+    return {
+      success: false,
+      message: "Error fetching order details",
+      error: error.message
+    };
+  }
+};
+
 module.exports = {
   createOrderFromCartWithPincodeMatching,
   updateOrderStatus,
@@ -414,5 +547,7 @@ module.exports = {
   getOrdersBySellerId,
   getOrders,
   trackOrder,
-  cancelOrder
+  cancelOrder,
+  getTopSellingProductsInMonth,
+  getSellerOrderById
 };

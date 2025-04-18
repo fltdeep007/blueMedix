@@ -14,6 +14,7 @@ const sellerRoutes = require('./Routes/seller');
 const authRoutes = require('./Routes/auth')
 const superAdmin = require('./Routes/superAdmin')
 const regAdminRoutes = require('./Routes/regionalAdmin')
+// const topSelling = require('./Routes/topSellingRoutes')
 
 const app = express();
 const PORT = 5000;
@@ -38,6 +39,7 @@ app.use('/api/cart', cartRoutes);  // working all
 app.use('/api/orders', orderRoutes) 
 app.use('/api/products', productRoutes);
 app.use('/api/seller', sellerRoutes); 
+app.use('/api/analytics', cartRoutes);
 
 app.get('/', (req, res) => {
   res.send('Server is running!');

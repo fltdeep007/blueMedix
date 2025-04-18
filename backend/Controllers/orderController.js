@@ -197,6 +197,33 @@ const cancelOrder = async (req, res) => {
     });
   }
 };
+// Get specific order by seller ID and order ID
+const getSellerOrderById = async (req, res) => {
+  try {
+    const { sellerId, orderId } = req.params;
+    
+    // Check if both IDs are provided
+    if (!sellerId || !orderId) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Both seller ID and order ID are required" 
+      });
+    }
+    
+    const result = await orderService.getSellerOrderById(sellerId, orderId);
+    
+    if (result.success) {
+      res.status(200).json(result);
+    } else {
+      res.status(404).json({ message: result.message });
+    }
+  } catch (error) {
+    res.status(500).json({ 
+      message: "Server error fetching order details", 
+      error: error.message 
+    });
+  }
+};
 
 module.exports = {
   placeOrder,
@@ -206,5 +233,6 @@ module.exports = {
   getOrderTrackingStatus,
   getOrdersBySellerId,
   getOrders,
-  cancelOrder
+  cancelOrder,
+  getSellerOrderById
 };
