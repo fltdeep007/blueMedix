@@ -308,6 +308,45 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+exports.checkUserEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    
+    // Validate email is provided
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required"
+      });
+    }
+    
+    // Check if user exists with this email
+    const existingUser = await User.findOne({ e_mail: email });
+    
+    if (existingUser) {
+      return res.status(200).json({
+        success: true,
+        isRegistered: true,
+        message: "User with this email is registered",
+        role: existingUser.role
+      });
+    } else {
+      return res.status(200).json({
+        success: true,
+        isRegistered: false,
+        message: "User with this email is not registered"
+      });
+    }
+  } catch (error) {
+    console.error("Error in checkUserEmail:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
+  }
+};
+
 // Helper function to notify regional admin about new seller
 async function notifyRegionalAdmin(seller , region) {
   try {
