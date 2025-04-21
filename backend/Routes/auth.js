@@ -8,6 +8,7 @@ const User = require("../Models/User/User")
 router.post('/login/otp', authController.requestOTP); 
 router.post('/verify/otp', authController.verifyOTP);
 router.post('/register', authController.registerUser);
+router.post('/check' , authController.checkUserEmail)
 
 
 router.post('/register/SuperAdmin', authController.createSuperAdmin);

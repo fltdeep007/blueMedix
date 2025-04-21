@@ -279,8 +279,8 @@ exports.getApprovedSellers = async (req, res) => {
         name: seller.name,
         phone_no: seller.phone_no,
         e_mail: seller.e_mail,
-        desc: seller.desc,
-        address: seller.address
+        // desc: seller.desc,
+        // address: seller.address
       }))
     });
   } catch (error) {
