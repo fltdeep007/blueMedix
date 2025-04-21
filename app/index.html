@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueMedix - Authentication</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container max-w-4xl mx-auto px-4 py-6">
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-blue-600 to-blue-800 rounded-xl shadow-lg p-6 text-white mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold">BlueMedix</h1>
+                    <p class="text-blue-100">Authentication & Registration</p>
+                </div>
+                <div class="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                    <i class="fas fa-user-shield text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Auth Flow Container -->
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+            <!-- Step 1: Phone Number Verification (Initially Visible) -->
+            <div id="phoneStep" class="p-6">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Enter Your Mobile Number</h2>
+                    <p class="text-gray-600">We'll send you a 6-digit OTP for verification</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                        <div class="px-4 py-3 bg-gray-100 border-r border-gray-300 flex items-center">
+                            <img src="https://flagcdn.com/w20/in.png" alt="India" class="w-5 h-3 mr-2">
+                            <span class="text-gray-700">+91</span>
+                        </div>
+                        <input type="tel" id="phoneNumber" class="flex-1 px-4 py-3 outline-none" placeholder="9876543210" maxlength="10" pattern="[0-9]{10}" required>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" id="termsCheck" class="mr-2">
+                        <label for="termsCheck" class="text-sm text-gray-600">I agree to the <a href="#" class="text-blue-600">Terms & Conditions</a> and <a href="#" class="text-blue-600">Privacy Policy</a></label>
+                    </div>
+                    
+                    <button id="sendOtpBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300 flex items-center justify-center">
+                        <span>Send OTP</span>
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 2: OTP Verification (Initially Hidden) -->
+            <div id="otpStep" class="p-6 hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Verify OTP</h2>
+                    <p class="text-gray-600">Enter the 6-digit code sent to <span id="displayPhone" class="font-medium">+91 9876543210</span></p>
+                </div>
+                
+                <div class="flex justify-center space-x-2 mb-4">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="1">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="2">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="3">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="4">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="5">
+                    <input type="text" class="otp-input w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg" maxlength="1" data-index="6">
+                </div>
+                
+                <div class="text-center mb-4">
+                    <button id="resendOtpBtn" class="text-blue-600 text-sm hover:underline">Resend OTP</button>
+                    <p id="resendTimer" class="text-gray-500 text-sm mt-1">Resend OTP in <span id="countdown">30</span>s</p>
+                </div>
+                
+                <div id="otpError" class="bg-red-100 text-red-700 p-3 rounded-lg mb-4 hidden">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <span>Invalid OTP. Please try again.</span>
+                </div>
+                
+                <div class="space-y-4">
+                    <button id="verifyOtpBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300">
+                        Verify & Continue
+                    </button>
+                    
+                    <button id="backToPhoneBtn" class="w-full border border-gray-300 text-gray-700 hover:bg-gray-100 py-3 px-4 rounded-lg font-medium transition duration-300">
+                        <i class="fas fa-arrow-left mr-2"></i> Back
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Step 3: Registration Form (Initially Hidden) -->
+            <div id="registerStep" class="p-6 hidden">
+                <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Complete Your Registration</h2>
+                    <p class="text-gray-600">Phone verified successfully. Please provide your details.</p>
+                </div>
+                
+                <form id="registrationForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="name" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input type="email" id="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" id="password" name="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" id="dob" name="dob" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                        </div>
+                        
+                        <div>
+                            <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                            <select id="gender" name="gender" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="role" class="block text-sm font-medium text-gray-700 mb-1">Register as</label>
+                            <select id="role" name="role" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                                <option value="">Select Role</option>
+                                <option value="Customer">Customer</option>
+                                <option value="Seller">Seller</option>
+                                <option value="Regional Admin">Regional Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="sellerFields" class="hidden space-y-4">
+                        <div>
+                            <label for="desc" class="block text-sm font-medium text-gray-700 mb-1">Business Description</label>
+                            <textarea id="desc" name="desc" rows="3" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <input type="text" id="addressLine1" name="addressLine1" placeholder="Address Line 1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <input type="text" id="addressLine2" name="addressLine2" placeholder="Address Line 2" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <input type="text" id="city" name="city" placeholder="City" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <input type="text" id="state" name="state" placeholder="State" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <input type="text" id="pincode" name="pincode" placeholder="PIN Code" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                            
+                            <div>
+                                <input type="text" id="region" name="region" placeholder="Region" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="registrationError" class="bg-red-100 text-red-700 p-3 rounded-lg hidden">
+                        <i class="fas fa-exclamation-circle mr-2"></i>
+                        <span></span>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit" id="registerBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300">
+                            Complete Registration
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Step 4: Success Message (Initially Hidden) -->
+            <div id="successStep" class="p-6 text-center hidden">
+                <div class="mb-6">
+                    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fas fa-check text-green-600 text-3xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800 mt-4">Registration Successful!</h2>
+                </div>
+                
+                <div id="customerSuccess" class="space-y-4 hidden">
+                    <p class="text-gray-600">You have successfully registered as a customer.</p>
+                    <button id="dashboardBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300">
+                        Go to Dashboard
+                    </button>
+                </div>
+                
+                <div id="sellerSuccess" class="space-y-4 hidden">
+                    <p class="text-gray-600">You have successfully registered as a seller.</p>
+                    <p class="text-gray-600">Your account is pending verification by a regional admin.</p>
+                    <p class="text-gray-600">We will notify you once your account is approved.</p>
+                    <button id="sellerDashboardBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300">
+                        Continue to Dashboard
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Optional: Login for Existing Users -->
+            <div id="existingUserStep" class="p-6 hidden">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user text-blue-600 text-2xl"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Welcome Back!</h2>
+                    <p class="text-gray-600">Your phone number is verified. Continue to your account.</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition duration-300">
+                        Continue to Dashboard
+                    </button>
+                    
+                    <button id="useAnotherBtn" class="w-full border border-gray-300 text-gray-700 hover:bg-gray-100 py-3 px-4 rounded-lg font-medium transition duration-300">
+                        Use Another Account
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Footer for all steps -->
+            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                <p class="text-center text-gray-600 text-sm">
+                    © 2025 BlueMedix. All rights reserved.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBpLeyan7LT4-s1byv4LlokL0z5AlnETns",
+            authDomain: "bluemedixauth.firebaseapp.com",
+            projectId: "bluemedixauth",
+            storageBucket: "bluemedixauth.firebasestorage.app",
+            messagingSenderId: "806816581906",
+            appId: "1:806816581906:web:9af054065129342c730bcb",
+            measurementId: "G-PC8VDDGDWB"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // API endpoint
+        const API_URL = 'http://localhost:5000/api'; // Change this to your actual API URL
+
+        // DOM elements
+        const phoneStep = document.getElementById('phoneStep');
+        const otpStep = document.getElementById('otpStep');
+        const registerStep = document.getElementById('registerStep');
+        const successStep = document.getElementById('successStep');
+        const existingUserStep = document.getElementById('existingUserStep');
+        const customerSuccess = document.getElementById('customerSuccess');
+        const sellerSuccess = document.getElementById('sellerSuccess');
+        const sellerFields = document.getElementById('sellerFields');
+        
+        // Form elements
+        const phoneNumber = document.getElementById('phoneNumber');
+        const otpInputs = document.querySelectorAll('.otp-input');
+        const roleSelect = document.getElementById('role');
+        const registrationForm = document.getElementById('registrationForm');
+        
+        // Buttons
+        const sendOtpBtn = document.getElementById('sendOtpBtn');
+        const verifyOtpBtn = document.getElementById('verifyOtpBtn');
+        const backToPhoneBtn = document.getElementById('backToPhoneBtn');
+        const resendOtpBtn = document.getElementById('resendOtpBtn');
+        const registerBtn = document.getElementById('registerBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const useAnotherBtn = document.getElementById('useAnotherBtn');
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        const sellerDashboardBtn = document.getElementById('sellerDashboardBtn');
+        
+        // Other elements
+        const displayPhone = document.getElementById('displayPhone');
+        const otpError = document.getElementById('otpError');
+        const registrationError = document.getElementById('registrationError');
+        const termsCheck = document.getElementById('termsCheck');
+        const resendTimer = document.getElementById('resendTimer');
+        const countdown = document.getElementById('countdown');
+        
+        // Variables
+        let verificationId = '';
+        let resendTimerInterval = null;
+        let secondsLeft = 30;
+        let userToken = '';
+        let firebaseToken = '';
+        let isNewUser = true;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            setupOtpInputs();
+            validateForm();
+            initializeRecaptcha();
+        });
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            sendOtpBtn.addEventListener('click', sendOtp);
+            verifyOtpBtn.addEventListener('click', verifyOtp);
+            backToPhoneBtn.addEventListener('click', backToPhone);
+            resendOtpBtn.addEventListener('click', resendOtp);
+            roleSelect.addEventListener('change', toggleSellerFields);
+            registrationForm.addEventListener('submit', registerUser);
+            loginBtn.addEventListener('click', goToDashboard);
+            useAnotherBtn.addEventListener('click', backToPhone);
+            dashboardBtn.addEventListener('click', goToDashboard);
+            sellerDashboardBtn.addEventListener('click', goToDashboard);
+            
+            phoneNumber.addEventListener('input', () => {
+                validatePhoneNumber();
+                validateForm();
+            });
+            
+            termsCheck.addEventListener('change', validateForm);
+        }
+        
+        // Setup OTP input behavior
+        function setupOtpInputs() {
+            otpInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const value = e.target.value;
+                    const index = parseInt(e.target.dataset.index);
+                    
+                    if (value.length === 1 && index < 6) {
+                        otpInputs[index].focus();
+                    }
+                    
+                    otpError.classList.add('hidden');
+                });
+                
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && e.target.value === '') {
+                        const index = parseInt(e.target.dataset.index);
+                        if (index > 1) {
+                            otpInputs[index - 2].focus();
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Validate phone number
+        function validatePhoneNumber() {
+            const phone = phoneNumber.value;
+            if (phone.length > 10) {
+                phoneNumber.value = phone.slice(0, 10);
+            }
+        }
+        
+        // Validate form
+        function validateForm() {
+            const phone = phoneNumber.value;
+            const isValidPhone = /^[6-9]\d{9}$/.test(phone);
+            const isTermsChecked = termsCheck.checked;
+            
+            sendOtpBtn.disabled = !(isValidPhone && isTermsChecked);
+            sendOtpBtn.classList.toggle('opacity-50', !(isValidPhone && isTermsChecked));
+        }
+        
+        // Toggle seller fields based on role selection
+        function toggleSellerFields() {
+            if (roleSelect.value === 'Seller') {
+                sellerFields.classList.remove('hidden');
+            } else {
+                sellerFields.classList.add('hidden');
+            }
+        }
+        
+        // Initialize reCAPTCHA
+        function initializeRecaptcha() {
+            window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('sendOtpBtn', {
+                'size': 'invisible',
+                'callback': (response) => {
+                    // reCAPTCHA solved, allow signInWithPhoneNumber
+                }
+            });
+        }
+        
+        // Send OTP
+        function sendOtp() {
+            const phone = phoneNumber.value;
+            
+            if (!/^[6-9]\d{9}$/.test(phone)) {
+                alert('Please enter a valid 10-digit mobile number');
+                return;
+            }
+            
+            if (!termsCheck.checked) {
+                alert('Please accept the terms and conditions');
+                return;
+            }
+            
+            sendOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending OTP...';
+            sendOtpBtn.disabled = true;
+            
+            // First, check with our backend if the user exists
+            fetch(`${API_URL}/auth/login/otp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    mobile: phone,
+                    code: '91'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Then use Firebase to actually send the OTP
+                    const phoneWithCode = `+91${phone}`;
+                    
+                    auth.signInWithPhoneNumber(phoneWithCode, window.recaptchaVerifier)
+                        .then((confirmationResult) => {
+                            window.confirmationResult = confirmationResult;
+                            isNewUser = !data.userExists;
+                            showOtpStep(phoneWithCode);
+                        })
+                        .catch((error) => {
+                            console.error('Firebase error:', error);
+                            alert('Failed to send OTP. Please try again.');
+                            sendOtpBtn.innerHTML = '<span>Send OTP</span><i class="fas fa-arrow-right ml-2"></i>';
+                            sendOtpBtn.disabled = false;
+                        });
+                } else {
+                    alert(data.message || 'Failed to send OTP');
+                    sendOtpBtn.innerHTML = '<span>Send OTP</span><i class="fas fa-arrow-right ml-2"></i>';
+                    sendOtpBtn.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('API error:', error);
+                alert('Failed to connect to server. Please try again.');
+                sendOtpBtn.innerHTML = '<span>Send OTP</span><i class="fas fa-arrow-right ml-2"></i>';
+                sendOtpBtn.disabled = false;
+            });
+        }
+        
+        // Show OTP step
+        function showOtpStep(phoneWithCode) {
+            displayPhone.textContent = phoneWithCode;
+            phoneStep.classList.add('hidden');
+            otpStep.classList.remove('hidden');
+            
+            // Reset OTP inputs
+            otpInputs.forEach(input => input.value = '');
+            otpInputs[0].focus();
+            
+            // Start resend timer
+            startResendTimer();
+        }
+        
+        // Start resend timer
+        function startResendTimer() {
+            clearInterval(resendTimerInterval);
+            
+            resendOtpBtn.disabled = true;
+            resendOtpBtn.classList.add('text-gray-400');
+            resendOtpBtn.classList.remove('text-blue-600');
+            resendTimer.classList.remove('hidden');
+            
+            secondsLeft = 30;
+            countdown.textContent = secondsLeft;
+            
+            resendTimerInterval = setInterval(() => {
+                secondsLeft--;
+                countdown.textContent = secondsLeft;
+                
+                if (secondsLeft <= 0) {
+                    clearInterval(resendTimerInterval);
+                    resendOtpBtn.disabled = false;
+                    resendOtpBtn.classList.remove('text-gray-400');
+                    resendOtpBtn.classList.add('text-blue-600');
+                    resendTimer.classList.add('hidden');
+                }
+            }, 1000);
+        }
+        
+        // Verify OTP
+        function verifyOtp() {
+            const otp = Array.from(otpInputs).map(input => input.value).join('');
+            
+            if (otp.length !== 6) {
+                showOtpError('Please enter a valid 6-digit OTP');
+                return;
+            }
+            
+            verifyOtpBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+            verifyOtpBtn.disabled = true;
+            
+            // Verify with Firebase
+            window.confirmationResult.confirm(otp)
+                .then((result) => {
+                    // Get the Firebase ID token
+                    return result.user.getIdToken();
+                })
+                .then((idToken) => {
+                    firebaseToken = idToken;
+                    
+                    // Verify with our backend
+                    return fetch(`${API_URL}/auth/verify/otp`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            mobile: phoneNumber.value,
+                            firebase_token: idToken
+                        })
+                    });
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        userToken = data.token;
+                        
+                        // Check if new user or existing user
+                        if (data.isNewUser) {
+                            // Show registration form
+                            otpStep.classList.add('hidden');
+                            registerStep.classList.remove('hidden');
+                        } else {
+                            // Show existing user screen
+                            otpStep.classList.add('hidden');
+                            existingUserStep.classList.remove('hidden');
+                        }
+                    } else {
+                        showOtpError(data.message || 'Failed to verify OTP');
+                    }
+                    
+                    verifyOtpBtn.innerHTML = 'Verify & Continue';
+                    verifyOtpBtn.disabled = false;
+                })
+                .catch((error) => {
+                    console.error('Error verifying OTP:', error);
+                    showOtpError('Invalid OTP or verification failed');
+                    verifyOtpBtn.innerHTML = 'Verify & Continue';
+                    verifyOtpBtn.disabled = false;
+                });
+        }
+        
+        // Show OTP error
+        function showOtpError(message = 'Invalid OTP. Please try again.') {
+            otpError.querySelector('span').textContent = message;
+            otpError.classList.remove('hidden');
+            
+            otpInputs.forEach(input => {
+                input.classList.add('border-red-500');
+            });
+            
+            setTimeout(() => {
+                otpInputs.forEach(input => {
+                    input.classList.remove('border-red-500');
+                });
+            }, 3000);
+        }
+        
+        // Resend OTP
+        function resendOtp() {
+            const phone = `+91${phoneNumber.value}`;
+            
+            resendOtpBtn.disabled = true;
+            resendOtpBtn.classList.add('text-gray-400');
+            
+            // Re-initialize recaptcha
+            window.recaptchaVerifier.render().then(widgetId => {
+                window.recaptchaVerifier.reset(widgetId);
+                
+                // Send OTP again
+                auth.signInWithPhoneNumber(phone, window.recaptchaVerifier)
+                    .then((confirmationResult) => {
+                        window.confirmationResult = confirmationResult;
+                        startResendTimer();
+                    })
+                    .catch((error) => {
+                        console.error('Error resending OTP:', error);
+                        alert('Failed to resend OTP. Please try again.');
+                        resendOtpBtn.disabled = false;
+                        resendOtpBtn.classList.remove('text-gray-400');
+                        resendOtpBtn.classList.add('text-blue-600');
+                    });
+            });
+        }
+        
+        // Back to phone step
+        function backToPhone() {
+            otpStep.classList.add('hidden');
+            existingUserStep.classList.add('hidden');
+            phoneStep.classList.remove('hidden');
+            
+            sendOtpBtn.innerHTML = '<span>Send OTP</span><i class="fas fa-arrow-right ml-2"></i>';
+            sendOtpBtn.disabled = false;
+            
+            clearInterval(resendTimerInterval);
+        }
+        
+        // Register user
+        function registerUser(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = {
+                name: document.getElementById('name').value,
+                e_mail: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                date_of_birth: document.getElementById('dob').value,
+                gender: document.getElementById('gender').value,
+                role: document.getElementById('role').value,
+                phone_no: phoneNumber.value,
+                address: {
+                    first_line: document.getElementById('addressLine1').value,
+                    second_line: document.getElementById('addressLine2').value,
+                    city: document.getElementById('city').value,
+                    state: document.getElementById('state').value,
+                    pin_code: document.getElementById('pincode').value
+                },
+                region: document.getElementById('region').value
+            };
+            
+            // Add seller-specific fields if applicable
+            if (formData.role === 'Seller') {
+                formData.desc = document.getElementById('desc').value;
+            }
+            
+            registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+            registerBtn.disabled = true;
+            
+            // Register user with our backend
+            fetch(`${API_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update token with new user info
+                    userToken = data.token;
+                    
+                    // Show success message
+                    registerStep.classList.add('hidden');
+                    successStep.classList.remove('hidden');
+                    
+                    // Show appropriate success message based on role
+                    if (formData.role === 'Customer') {
+                        customerSuccess.classList.remove('hidden');
+                        sellerSuccess.classList.add('hidden');
+                    } else if (formData.role === 'Seller') {
+                        customerSuccess.classList.add('hidden');
+                        sellerSuccess.classList.remove('hidden');
+                    }
+                    
+                    // Save token to localStorage for future use
+                    localStorage.setItem('blueMedixToken', userToken);
+                    localStorage.setItem('blueMedixUser', JSON.stringify(data.user));
+                } else {
+                    showRegistrationError(data.message || 'Registration failed');
+                }
+                
+                registerBtn.innerHTML = 'Complete Registration';
+                registerBtn.disabled = false;
+            })
+            .catch(error => {
+                console.error('API error:', error);
+                showRegistrationError('Failed to connect to server. Please try again.');
+                registerBtn.innerHTML = 'Complete Registration';
+                registerBtn.disabled = false;
+            });
+        }
+        
+        // Show registration error
+        function showRegistrationError(message) {
+            registrationError.querySelector('span').textContent = message;
+            registrationError.classList.remove('hidden');
+            
+            setTimeout(() => {
+                registrationError.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Go to dashboard
+        function goToDashboard() {
+            // Save token to localStorage for future use
+            localStorage.setItem('blueMedixToken', userToken);
+            
+            // In a real app, you would redirect to the dashboard
+            window.location.href = '/dashboard.html';
+        }
+    </script>
+</body>
+</html>
