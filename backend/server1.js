@@ -1,26 +1,30 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+require('dotenv').config(); // For .env support
 
+// Routes
 const customerRoutes = require('./routes/customers');
 const orderRoutes = require('./routes/orders');
 
 const app = express();
-app.use(express.json());
+
+// Middleware
 app.use(cors());
+app.use(express.json()); // For parsing application/json
 
+// MongoDB connection using .env
 mongoose
-  .connect('mongodb+srv://deepanshujain288:N3xWmTCRZFmengDa@goal.zzkvw.mongodb.net/blue', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB Connected'))
-  .catch((err) => console.log('❌ DB Error:', err));
+  .catch((err) => console.error('❌ MongoDB Error:', err));
 
+// Routes
 app.use('/customers', customerRoutes);
 app.use('/orders', orderRoutes);
 
-const PORT = 8000;
+// Start server
+const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
+  console.log(`🚀 Server is running at http://localhost:${PORT}`);
 });
