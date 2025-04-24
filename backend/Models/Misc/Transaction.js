@@ -24,7 +24,7 @@ const transactionSchema = new mongoose.Schema({
   eventId: {
     type: String,
     required: true,
-    enum: ['order_placed', 'order_cancelled', 'order_delivered'],
+    enum: ['order_placed', 'order_accepted' , 'order_dispatched' , 'order_cancelled', 'order_delivered'],
     default: 'order_placed'
   },
   timestamp: {

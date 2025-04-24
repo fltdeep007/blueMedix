@@ -14,38 +14,38 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
     if (!customer) {
       return { success: false, message: "Customer not found" };
     }
-    
+
     // Get customer's pincode
     const customerPincode = customer.address.pin_code;
-        
+
     // Find sellers with matching pincode
     const availableSellers = await Seller.find({
       'address.pin_code': customerPincode,
       'verification_status': 'approved',
       'is_verified': true
     }).lean();
-        
+
     if (availableSellers.length === 0) {
       return {
         success: false,
         message: "No verified sellers available in your pincode area"
       };
     }
-        
+
     // Get an available seller (for now, just take the first one)
     const sellerId = availableSellers[0]._id;
-        
+
     // Validate products array
     if (!products || !Array.isArray(products) || products.length === 0) {
       return { success: false, message: "No products provided for order" };
     }
-        
+
     console.log("Products received:", JSON.stringify(products)); // Debug log
-        
+
     // Validate products and get their details
     const orderItems = [];
     let totalPrice = 0;
-        
+
     for (const item of products) {
       // Check if productId exists
       if (!item.productId) {
@@ -54,9 +54,9 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
           message: "Product ID is missing in one of the products"
         };
       }
-            
+
       console.log(`Looking up product with ID: ${item.productId}`); // Debug log
-            
+
       const product = await Product.findById(item.productId);
       if (!product) {
         return {
@@ -64,19 +64,19 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
           message: `Product with ID ${item.productId} not found`
         };
       }
-            
+
       // Handle Decimal128 properly
       const productPrice = parseFloat(product.price.toString());
       const itemPrice = productPrice * item.quantity;
       totalPrice += itemPrice;
-            
+
       orderItems.push({
         product: product._id,
         quantity: item.quantity,
         price: productPrice
       });
     }
-        
+
     // Create new order
     const newOrder = new Order({
       customer: userId,
@@ -91,7 +91,7 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
         pin_code: customer.address.pin_code
       },
       status: 'pending',
-      prescription_image: prescription_image,
+      prescription_image: prescription_image || null, // Make it optional
       payment_method: payment_method,
       payment_status: payment_method === 'cod' ? 'pending' : 'paid', // Mark UPI payments as paid
       upi_id: payment_method === 'upi' ? upi_id : null,
@@ -101,15 +101,15 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
         description: 'Order placed successfully'
       }]
     });
-        
+
     const savedOrder = await newOrder.save();
-    
+
     await Seller.findByIdAndUpdate(
       sellerId,
       { $push: { orders: savedOrder._id } },
       { new: true }
     );
-    
+
     // Create transaction records for each product in the order
     const transactionPromises = orderItems.map(item => {
       const transaction = new Transaction({
@@ -121,9 +121,9 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
       });
       return transaction.save();
     });
-    
+
     await Promise.all(transactionPromises);
-           
+
     return {
       success: true,
       message: "Order placed successfully",
@@ -193,26 +193,45 @@ const getOrdersBySellerId = async (sellerId, status = null) => {
 const updateOrderStatus = async (orderId, status) => {
   try {
     // Valid status transitions
-    const validStatuses = ['pending', 'accepted', 'dispatched', 'delivered', 'rejected'];
-    
+    const validStatuses = ['pending', 'accepted', 'rejected', 'dispatched', 'delivered', 'cancelled'];
+
     if (!validStatuses.includes(status)) {
       return {
         success: false,
         message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
       };
     }
-    
-    const order = await Order.findById(orderId);
+
+    const order = await Order.findById(orderId).populate('items.product');
     if (!order) {
       return {
         success: false,
         message: "Order not found"
       };
     }
-    
+
+    const currentStatus = order.status;
+
+    // Define allowed transitions
+    const allowedTransitions = {
+      'pending': ['accepted', 'rejected'],
+      'accepted': ['dispatched', 'cancelled'],
+      'rejected': [],
+      'dispatched': ['delivered', 'cancelled'],
+      'delivered': [],
+      'cancelled': []
+    };
+
+    if (!allowedTransitions[currentStatus].includes(status)) {
+      return {
+        success: false,
+        message: `Cannot change order status from '${currentStatus}' to '${status}'`
+      };
+    }
+
     // Update order status
     order.status = status;
-    
+
     // Add tracking entry
     let description;
     switch (status) {
@@ -228,18 +247,58 @@ const updateOrderStatus = async (orderId, status) => {
       case 'rejected':
         description = 'Order has been rejected by seller';
         break;
+      case 'cancelled':
+        description = 'Order has been cancelled';
+        break;
       default:
         description = `Order status updated to ${status}`;
     }
-    
+
     order.tracking.push({
       status,
       timestamp: new Date(),
       description
     });
-    
+
     await order.save();
-    
+
+    // Create transaction records for each product in the order
+    const transactionPromises = order.items.map(item => {
+      // IMPORTANT:  Use the status, but check if it's a valid eventId.
+      let eventId;
+      switch (status) {
+        case 'accepted':
+          eventId = 'order_accepted';
+          break;
+        case 'dispatched':
+          eventId = 'order_dispatched';
+          break;
+        case 'delivered':
+          eventId = 'order_delivered';
+          break;
+        case 'cancelled':
+          eventId = 'order_cancelled';
+          break;
+        default:
+          eventId = 'order_placed'; //  Default case
+      }
+      if (!['order_placed', 'order_accepted', 'order_dispatched', 'order_cancelled', 'order_delivered'].includes(eventId)) {
+        // This should NEVER happen, but it's good to have a fallback.
+        console.error(`Invalid eventId: ${eventId} for order ${order._id}.  Using 'order_placed' instead.`);
+        eventId = 'order_placed'; // Or you could throw an error here.
+      }
+
+      const transaction = new Transaction({
+        order: order._id,
+        product: item.product._id,
+        quantity: item.quantity,
+        eventId: eventId, // Use the validated eventId
+        timestamp: new Date()
+      });
+      return transaction.save();
+    });
+    await Promise.all(transactionPromises);
+
     return {
       success: true,
       message: `Order status updated to ${status}`,

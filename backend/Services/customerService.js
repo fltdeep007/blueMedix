@@ -82,8 +82,109 @@ const getCart = async (userId) => {
   }
 };
 
+const updateCartItemQuantity = async (userId, productId, quantityChange) => {
+  try {
+      const customer = await Customer.findById(userId);
+      if (!customer) {
+          return { success: false, message: 'Customer not found' };
+      }
+
+      const itemIndex = customer.cart.findIndex(item => item.product.toString() === productId);
+
+      if (itemIndex === -1) {
+          return { success: false, message: 'Product not found in cart' };
+      }
+
+      const currentQuantity = customer.cart[itemIndex].quantity;
+      const newQuantity = currentQuantity + quantityChange;
+
+      if (newQuantity > 0) {
+          customer.cart[itemIndex].quantity = newQuantity;
+          await customer.save();
+          // Optionally populate the updated cart item or the whole cart
+          await customer.populate('cart.product');
+          const updatedCartItem = customer.cart[itemIndex];
+
+           // Format the updated item similarly to the getCart response
+          const formattedUpdatedItem = {
+               product: {
+                  id: updatedCartItem.product._id,
+                  name: updatedCartItem.product.name,
+                  price: updatedCartItem.product.price,
+                  description: updatedCartItem.product.description,
+                  image: updatedCartItem.product.image_link,
+                  discount: updatedCartItem.product.discount,
+               },
+               quantity: updatedCartItem.quantity
+          };
+
+
+          return {
+              success: true,
+              message: 'Cart item quantity updated',
+              item: formattedUpdatedItem,
+              cart: customer.cart.map(item => ({ // Return the whole updated cart as well for convenience
+                   product: {
+                      id: item.product._id,
+                      name: item.product.name,
+                      price: item.product.price,
+                      description: item.product.description,
+                      image: item.product.image_link,
+                      discount: item.product.discount,
+                   },
+                   quantity: item.quantity
+              }))
+          };
+      } else {
+          // New quantity is 0 or less, remove the item
+          const [removedItem] = customer.cart.splice(itemIndex, 1); // Remove the item and get the removed item
+          await customer.save();
+
+           // Populate the removed item's product details if available
+           if (removedItem && removedItem.product) {
+               await Product.populate(removedItem, { path: 'product' });
+           }
+
+
+          return {
+              success: true,
+              message: 'Cart item removed as quantity reached 0',
+              removedItem: removedItem ? { // Return details of the removed item
+                   product: {
+                      id: removedItem.product?._id,
+                      name: removedItem.product?.name,
+                      price: removedItem.product?.price,
+                      description: removedItem.product?.description,
+                      image: removedItem.product?.image_link,
+                      discount: removedItem.product?.discount,
+                   },
+                   quantity: removedItem.quantity // This will be the quantity before removal
+              } : null,
+               cart: customer.cart.map(item => ({ // Return the whole updated cart as well
+                   product: {
+                      id: item.product._id,
+                      name: item.product.name,
+                      price: item.product.price,
+                      description: item.product.description,
+                      image: item.product.image_link,
+                      discount: item.product.discount,
+                   },
+                   quantity: item.quantity
+               }))
+          };
+      }
+
+  } catch (error) {
+      console.error('Error in updateCartItemQuantityService:', error);
+      return { success: false, message: error.message };
+  }
+};
+
+
+
 module.exports = {
   addToCart,
   removeFromCart,
-  getCart
+  getCart,
+  updateCartItemQuantity
 };

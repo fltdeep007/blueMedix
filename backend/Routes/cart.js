@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {addItemToCart, deleteCartItem, getCart} = require("../Controllers/customerController");
+const {addItemToCart, deleteCartItem, getCart , updateCartItemQuantityController} = require("../Controllers/customerController");
 const { validationResult } = require('express-validator');
 const { getTopSellingProducts } = require('../Controllers/transactionController');
 
@@ -38,6 +38,19 @@ router.get("/:userId", getCart);
  */
 
 router.delete('/:userId/:productId', deleteCartItem);
+/**
+ * Route: PUT /:userId/:productId
+ * Functionality: Updates the quantity of a specific product in a user's cart.
+ * Parameters (Route):
+ * - userId (number): The ID of the user.
+ * - productId (number): The ID of the product to update.
+ * Parameters (Body):
+ * - quantityChange (number): The amount to change the quantity by (positive for increase, negative for decrease).
+ * Return Value:
+ * - On success: 200 status with JSON message and updated cart (or details of removed item if quantity goes to 0).
+ * - On failure: 400 status for bad request (invalid quantityChange), 404 for customer or item not found, 500 for server error.
+ */
+router.put('/:userId/:productId', updateCartItemQuantityController);
 
 router.get('/top/top-products', 
   async (req, res) => {

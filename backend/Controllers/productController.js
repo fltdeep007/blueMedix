@@ -9,6 +9,8 @@ const getAllProducts = async (req, res) => {
     }
 };
 
+
+
 const getProductById = async (req, res) => {
     const { productId } = req.params;
 
@@ -70,12 +72,22 @@ const getProductByCategory = async (req, res) => {
     }
 };
 
+const getAllCategories  = async(req,res) =>{
+    const result = await productService.getAllCategory()
+    if(result.success){
+        res.status(200).json(result.Categories);
+    } else{
+        res.status(404).json({ message: result.message });
+    }
+}
+
 module.exports = {
     getAllProducts,
     getProductById,
     addProduct,
     deleteProduct,
     updateProduct, 
-    getProductByCategory
+    getProductByCategory,
+    getAllCategories
 };
 

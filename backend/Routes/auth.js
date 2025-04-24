@@ -3,6 +3,7 @@ const router = express.Router();
 const authController = require('../Controllers/authController')
 const { authenticate } = require('../middleware/authMiddleware');  // to get token and pass user role 
 const User = require("../Models/User/User")
+const { getCustomersInSellerPincode , getUsersInRegionalAdminRegion , getSellersInRegionalAdminRegion} = require('../Controllers/userController')
 
 
 router.post('/login/otp', authController.requestOTP); 
@@ -23,46 +24,11 @@ router.post('/' , authController.loginUser)
 
 
 
-/**
- * Route: POST /verify-otp
- * Functionality: Verifies the submitted OTP and issues a JWT token upon successful verification.
- * Parameters (Body):
- *   - phone_number (string): The user's phone number.
- *   - otp (string): The OTP entered by the user.
- * Return Value:
- *   - On success: JSON object containing a JWT token.
- *   - On failure: 401 status with an error message.
- */
-// router.post("/verify-otp", (req, res) => {
-//   const { phone_number, otp } = req.body;
-//   if (otp === "123456") {
-//     const token = jwt.sign({ phone_number }, SECRET, { expiresIn: "1h" }); // Create JWT valid for 1 hour
-//     res.json({ token });
-//   } else {
-//     res.status(401).json({ message: "Invalid OTP" });
-//   }
-// });
-
-/**
- * Route: POST /logout
- * Functionality: Simulates user logout (stateless as JWT cannot be invalidated server-side without additional mechanisms).
- * Parameters: None
- * Return Value:
- *   - JSON object confirming logout success.
- */
 router.post("/logout", (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-/**
- * Route: GET /me
- * Functionality: Retrieves user information from the JWT token sent in the 'Authorization' header.
- * Parameters (Header):
- *   - Authorization: "Bearer <JWT Token>"
- * Return Value:
- *   - On success: JSON object containing decoded user data (e.g., phone number).
- *   - On missing/invalid token: 401 or 403 status.
- */
+
 router.get("/me", authenticate, async (req, res) => {
   try {
     // Fetch full user details by ID
@@ -88,6 +54,10 @@ router.get("/me", authenticate, async (req, res) => {
     });
   }
 });
+
+router.get('/seller/:sellerId' , getCustomersInSellerPincode)
+router.get('/regAdmin/customer/:regAdminId' , getUsersInRegionalAdminRegion)
+router.get('/regAdmin/seller/:regAdminId' , getSellersInRegionalAdminRegion)
 
 // router.post('/super-admin/create', authController.createSuperAdmin); // Developer only
 // router.get('/super-admin/regional-admins', auth(['SuperAdmin']), authController.getRegionalAdmins);

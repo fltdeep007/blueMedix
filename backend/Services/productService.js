@@ -1,5 +1,5 @@
 const Product = require('../Models/Products/Product');
-const Seller = require('../Models/User/Roles/Seller');
+// const Seller = require('../Models/User/Roles/Seller');
 const Category = require('../Models/Products/Category');
 
 const getAllProducts = async () => {
@@ -69,20 +69,47 @@ const updateProduct = async (productId, productData) => {
     }
 };
 
-const getProductByCategory = async (categoryId) => { 
+const getProductByCategory = async (categoryId) => {
     try {
-      const products = await Product.find({ category: categoryId });
+
+      const category = await Category.findById(categoryId).select('name');
   
-      if (!products || products.length === 0) {
-        return { success: false, message: 'No products found for this category' };
+      // Check if the category was found
+      if (!category) {
+        return { success: false, message: 'Category not found' };
       }
   
-      return { success: true, products };
+      
+      const products = await Product.find().populate('category', 'name');
+
+      const formattedProducts = products.map(product => {
+        const prod = product.toObject(); // convert Mongoose doc to plain object
+        prod.category = prod.category?.name || null; // replace category object with name
+        return prod;
+      });
+  
+      return { success: true, products: formattedProducts };
+  
+   
+  
+     
     } catch (error) {
-      return { success: false, message: error.message };
+      console.error("Error in getProductByCategory:", error);
+      
+      return { success: false, message: 'An error occurred while fetching products by category.', error: error.message };
     }
   };
-  
+
+  const getAllCategory = async() =>{
+    try{
+        const categories = await Category.find();
+        return{success:true , Categories: categories};
+    }catch(error){
+        console.log("Error in fetching categories");
+        return { success: false, message: 'An error occurred while fetching  categories.', error: error.message };
+        
+    }
+  }
 
 
 module.exports = {
@@ -92,6 +119,7 @@ module.exports = {
     deleteProduct,
     updateProduct,
     getProductByCategory,
+    getAllCategory
 };
 
 

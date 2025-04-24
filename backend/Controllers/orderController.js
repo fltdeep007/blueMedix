@@ -1,59 +1,119 @@
 const orderService = require('../Services/orderService');
 
 // Place an order - finds seller with matching pincode
-const placeOrder = async (req, res) => {
-  try {
-    console.log("Request body:", JSON.stringify(req.body)); // Debug log
-    const { 
-        userId, 
-        products, 
-        prescription_image, 
-        payment_method,
-        upi_id 
-      } = req.body;
+const path = require('path');
+const fs = require('fs').promises;
+const { v4: uuidv4 } = require('uuid'); // For generating unique filenames
 
-      if (!userId) {
-        return res.status(400).json({ message: "User ID is required" });
+const UPLOAD_DIR = path.join(__dirname, 'uploads'); // Define your upload directory
+
+// Ensure the upload directory exists
+(async () => {
+  try {
+    await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    console.log(`Upload directory created or already exists at: ${UPLOAD_DIR}`);
+  } catch (error) {
+    console.error("Error creating upload directory:", error);
+  }
+})();
+
+const storeLocalAndGetLink = async (file) => {
+  if (!file) {
+    return null;
+  }
+
+  if (file.size > 16 * 1024 * 1024) { // 16 MB limit
+    throw new Error("Prescription image size exceeds the limit of 16 MB.");
+  }
+
+  const fileExtension = path.extname(file.originalname);
+  const uniqueFilename = `${uuidv4()}${fileExtension}`;
+  const localFilePath = path.join(UPLOAD_DIR, uniqueFilename);
+  const serverBaseUrl = 'http://localhost:5000'; // Replace with your server's base URL
+  const imageUrl = `${serverBaseUrl}/uploads/${uniqueFilename}`;
+
+  try {
+    await fs.writeFile(localFilePath, file.buffer);
+    return imageUrl;
+  } catch (error) {
+    console.error("Error saving file locally:", error);
+    throw error;
+  }
+};
+
+const placeOrder = async (req, res) => {
+  console.log("Request Body:", req.body);
+  console.log("Request File:", req.file);
+  try {
+    const {
+      userId,
+      payment_method,
+      upi_id,
+      prescription_image: prescriptionLinkFromBody // Rename to avoid confusion
+    } = req.body;
+
+    let products;
+    try {
+      products = JSON.parse(req.body.products);
+    } catch (error) {
+      return res.status(400).json({ message: "Invalid products format" });
+    }
+
+    let prescription_image = prescriptionLinkFromBody; // Initialize with the link from body
+
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required" });
+    }
+
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ message: "Products array is required and must not be empty" });
+    }
+
+    // Validate each product has required fields
+    for (let i = 0; i < products.length; i++) {
+      const product = products[i];
+      if (!product.productId) {
+        return res.status(400).json({
+          message: `Missing productId in product at index ${i}`,
+          receivedProduct: product
+        });
       }
-      
-      if (!products || !Array.isArray(products) || products.length === 0) {
-        return res.status(400).json({ message: "Products array is required and must not be empty" });
+      if (!product.quantity || isNaN(product.quantity) || product.quantity <= 0) {
+        return res.status(400).json({
+          message: `Invalid quantity for product at index ${i}`,
+          receivedProduct: product
+        });
       }
-      
-      // Validate each product has required fields
-      for (let i = 0; i < products.length; i++) {
-        const product = products[i];
-        if (!product.productId) {
-          return res.status(400).json({ 
-            message: `Missing productId in product at index ${i}`,
-            receivedProduct: product
-          });
-        }
-        if (!product.quantity || isNaN(product.quantity) || product.quantity <= 0) {
-          return res.status(400).json({ 
-            message: `Invalid quantity for product at index ${i}`,
-            receivedProduct: product
-          });
-        }
+    }
+
+    // Handle image upload if a file is present in the request
+    if (req.file) {
+      try {
+        const imageUrl = await storeLocalAndGetLink(req.file);
+        prescription_image = imageUrl;
+      } catch (uploadError) {
+        console.error("Error handling image upload:", uploadError);
+        return res.status(400).json({ message: uploadError.message || "Error processing prescription image." });
       }
-    
+    }
+
     const result = await orderService.createOrderFromCartWithPincodeMatching(
-        userId, 
-        products, 
-        prescription_image, 
-        payment_method,
-        upi_id 
+      userId,
+      products,
+      prescription_image,
+      payment_method,
+      upi_id
     );
-    
+
     if (result.success) {
       res.status(201).json(result);
     } else {
       res.status(400).json({ message: result.message });
     }
   } catch (error) {
-    res.status(500).json({ 
-      message: "Server error while placing order", 
-      error: error.message 
+    res.status(500).json({
+      message: "Server error while placing order",
+      error: error.message
     });
   }
 };

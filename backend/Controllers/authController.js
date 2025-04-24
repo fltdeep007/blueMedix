@@ -121,182 +121,182 @@ exports.verifyOTP = async (req, res) => {
 // Register a new user (after OTP verification)
 exports.registerUser = async (req, res) => {
   try {
-    const {
-      name,
-      address,
-      gender,
-      date_of_birth,
-      e_mail,
-      password,
-      phone_no,
-      region,
-      role,
-    } = req.body;
+    const users = Array.isArray(req.body) ? req.body : [req.body];
+    const results = [];
 
-     // Verify the provided token to ensure the phone is verified
-    // const token = req.headers.authorization?.split(" ")[1];
-    // if (!token) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Authorization token required",
-    //   });
-    // }
+    for (const user of users) {
+      const {
+        name,
+        address,
+        gender,
+        date_of_birth,
+        e_mail,
+        password,
+        phone_no,
+        region,
+        role,
+        desc,
+        complaints
+      } = user;
 
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // if (decoded.phone_no !== phone_no.toString()) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Phone number does not match verified number",
-    //   });
-    // }
-    // Validate required fields
-    if (!name || !address || !gender || !date_of_birth || !e_mail || 
-        !password || !phone_no || !region || !role) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required",
-      });
-    }
-
-    // Validate address fields
-    if (!address.first_line || !address.second_line || !address.city || 
-        !address.state || !address.pin_code) {
-      return res.status(400).json({
-        success: false,
-        message: "All address fields are required",
-      });
-    }
-
-    // Convert string values to numbers
-    const numericPhone = typeof phone_no === 'string' ? parseInt(phone_no, 10) : phone_no;
-    const numericPinCode = typeof address.pin_code === 'string' ? 
-      parseInt(address.pin_code, 10) : address.pin_code;
-
-    if (isNaN(numericPhone) || isNaN(numericPinCode)) {
-      return res.status(400).json({
-        success: false,
-        message: "Phone number and pin code must be valid numbers",
-      });
-    }
-
-    // Create formatted address object with numeric pin_code
-    const formattedAddress = {
-      first_line: address.first_line,
-      second_line: address.second_line,
-      city: address.city,
-      state: address.state,
-      pin_code: numericPinCode
-    };
-
-    // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [{ e_mail }, { phone_no: numericPhone }],
-    });
-
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "User with this email or phone already exists",
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
-    // Create base user data
-    const userData = {
-      name,
-      address: formattedAddress,
-      gender,
-      date_of_birth: new Date(date_of_birth),
-      e_mail,
-      password: hashedPassword,
-      phone_no: numericPhone,
-      region,
-      verification_status: "pending",
-      is_verified: false,
-      role
-    };
-    
-    let newUser;
-
-    // Create user based on role
-    switch (role) {
-      case "Customer":
-        userData.verification_status = "approved";
-        userData.is_verified = true;
-        newUser = await Customer.create(userData);
-        break;
-
-      case "Seller":
-        // Check if seller exists in pincode
-        const existingSellerInPincode = await Seller.findOne({
-          'address.pin_code': numericPinCode,
-          verification_status: { $in: ['approved', 'pending'] }
-        });
-        
-        if (existingSellerInPincode) {
-          return res.status(409).json({
-            success: false,
-            message: "A seller already exists or is pending approval for this PIN code"
-          });
-        }
-        
-        newUser = await Seller.create({
-          ...userData,
-          desc: req.body.desc || "",
-          complaints : req.body.complaints || "",
-          orders: [] 
-        });
-
-        await notifyRegionalAdmin(newUser, region);
-        break;
-
-      case "RegionalAdmin":
-       
-        const regionalAdmin = new RegionalAdmin({
-          ...userData,
-          // Explicitly initialize arrays as empty
-         
-          sellers: []
-        });
-        
-        // Save the document
-        newUser = await regionalAdmin.save();
-        await notifySuperAdmin(newUser);
-        break;
-
-      default:
-        return res.status(400).json({
+      if (!name || !address || !gender || !date_of_birth || !e_mail ||
+          !password || !phone_no || !region || !role) {
+        results.push({
           success: false,
-          message: "Invalid role",
+          message: "All fields are required",
+          e_mail,
+          phone_no
         });
-    }
+        continue;
+      }
 
-    // Generate JWT token
-    const newToken = jwt.sign(
-      {
-        phone_no: newUser.phone_no,
-        user_id: newUser._id,
-        role: newUser.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
+      if (!address.first_line || !address.second_line || !address.city ||
+          !address.state || !address.pin_code) {
+        results.push({
+          success: false,
+          message: "All address fields are required",
+          e_mail,
+          phone_no
+        });
+        continue;
+      }
+
+      const numericPhone = typeof phone_no === 'string' ? parseInt(phone_no, 10) : phone_no;
+      const numericPinCode = typeof address.pin_code === 'string' ? parseInt(address.pin_code, 10) : address.pin_code;
+
+      if (isNaN(numericPhone) || isNaN(numericPinCode)) {
+        results.push({
+          success: false,
+          message: "Phone number and pin code must be valid numbers",
+          e_mail,
+          phone_no
+        });
+        continue;
+      }
+
+      const formattedAddress = {
+        first_line: address.first_line,
+        second_line: address.second_line,
+        city: address.city,
+        state: address.state,
+        pin_code: numericPinCode
+      };
+
+      const existingUser = await User.findOne({
+        $or: [{ e_mail }, { phone_no: numericPhone }],
+      });
+
+      if (existingUser) {
+        results.push({
+          success: false,
+          message: "User with this email or phone already exists",
+          e_mail,
+          phone_no
+        });
+        continue;
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      const userData = {
+        name,
+        address: formattedAddress,
+        gender,
+        date_of_birth: new Date(date_of_birth),
+        e_mail,
+        password: hashedPassword,
+        phone_no: numericPhone,
+        region,
+        verification_status: "pending",
+        is_verified: false,
+        role
+      };
+
+      let newUser;
+
+      switch (role) {
+        case "Customer":
+          userData.verification_status = "approved";
+          userData.is_verified = true;
+          newUser = await Customer.create(userData);
+          break;
+
+        case "Seller":
+          const existingSellerInPincode = await Seller.findOne({
+            'address.pin_code': numericPinCode,
+            verification_status: { $in: ['approved', 'pending'] }
+          });
+
+          if (existingSellerInPincode) {
+            results.push({
+              success: false,
+              message: "A seller already exists or is pending approval for this PIN code",
+              e_mail,
+              phone_no
+            });
+            continue;
+          }
+
+          newUser = await Seller.create({
+            ...userData,
+            desc: desc || "",
+            complaints: complaints || "",
+            orders: []
+          });
+
+          // await notifyRegionalAdmin(newUser, region);
+          break;
+
+        case "RegionalAdmin":
+          newUser = new RegionalAdmin({
+            ...userData,
+            sellers: []
+          });
+
+          await newUser.save();
+          // await notifySuperAdmin(newUser);
+          break;
+
+        default:
+          results.push({
+            success: false,
+            message: "Invalid role",
+            e_mail,
+            phone_no
+          });
+          continue;
+      }
+
+      const newToken = jwt.sign(
+        {
+          phone_no: newUser.phone_no,
+          user_id: newUser._id,
+          role: newUser.role,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+
+      results.push({
+        success: true,
+        message: "User registered successfully",
+        token: newToken,
+        user: {
+          id: newUser._id,
+          name: newUser.name,
+          role: newUser.role,
+          phone_no: newUser.phone_no,
+          verification_status:
+            newUser.role === "Seller" ? newUser.verification_status : null,
+        },
+      });
+    }
 
     return res.status(201).json({
-      success: true,
-      message: "User registered successfully",
-      token: newToken,
-      user: {
-        id: newUser._id,
-        name: newUser.name,
-        role: newUser.role,
-        phone_no: newUser.phone_no,
-        verification_status:
-          newUser.role === "Seller" ? newUser.verification_status : null,
-      },
+      message: "Bulk registration result",
+      results
     });
+
   } catch (error) {
     console.error("Error in registerUser:", error);
     return res.status(500).json({
@@ -307,6 +307,7 @@ exports.registerUser = async (req, res) => {
     });
   }
 };
+
 
 exports.checkUserEmail = async (req, res) => {
   try {
@@ -348,69 +349,69 @@ exports.checkUserEmail = async (req, res) => {
 };
 
 // Helper function to notify regional admin about new seller
-async function notifyRegionalAdmin(seller , region) {
-  try {
-    // Find regional admin for the seller's region
-    const regionalAdmin = await RegionalAdmin.findOne({
-      region: region,
-      verification_status: "approved",
-      is_verified: true
-    });
+// async function notifyRegionalAdmin(seller , region) {
+//   try {
+//     // Find regional admin for the seller's region
+//     const regionalAdmin = await RegionalAdmin.findOne({
+//       region: region,
+//       verification_status: "approved",
+//       is_verified: true
+//     });
 
-    if (!regionalAdmin) {
+//     if (!regionalAdmin) {
       
-      console.error(`No approved regional admin found for region: ${region}`);
-      return;
-    }
-    await Notification.create({
-      user_id: regionalAdmin._id,
-      title: "New Seller Registration",
-      message: `A new seller "${seller.name}" has registered in your region and needs approval.`,
-      type: "approval_request",
-      data: {
-        seller_id: seller._id,
-        seller_name: seller.name,
-        pincode: seller.address.pin_code
-      },
-      is_read: false
-    });
-  } catch (error) {
-    console.error("Error notifying regional admin:", error);
-  }
-}
+//       console.error(`No approved regional admin found for region: ${region}`);
+//       return;
+//     }
+//     await Notification.create({
+//       user_id: regionalAdmin._id,
+//       title: "New Seller Registration",
+//       message: `A new seller "${seller.name}" has registered in your region and needs approval.`,
+//       type: "approval_request",
+//       data: {
+//         seller_id: seller._id,
+//         seller_name: seller.name,
+//         pincode: seller.address.pin_code
+//       },
+//       is_read: false
+//     });
+//   } catch (error) {
+//     console.error("Error notifying regional admin:", error);
+//   }
+// }
 
-async function notifySuperAdmin(regionalAdmin) {
-  try {
-    // Find the super admin 
-    const superAdmin = await User.findOne({ 
-      role: "SuperAdmin"
-    });
+// async function notifySuperAdmin(regionalAdmin) {
+//   try {
+//     // Find the super admin 
+//     const superAdmin = await User.findOne({ 
+//       role: "SuperAdmin"
+//     });
     
-    if (!superAdmin) {
-      console.error("No super admin found in the system");
-      return;
-    }
+//     if (!superAdmin) {
+//       console.error("No super admin found in the system");
+//       return;
+//     }
     
-    // Create a notification
-    await Notification.create({
-      user_id: superAdmin._id,
-      title: "New Regional Admin Registration",
-      message: `A new regional admin "${regionalAdmin.name}" has registered for ${regionalAdmin.region} region and needs approval.`,
-      type: "approval_request",
-      data: {
-        admin_id: regionalAdmin._id,
-        admin_name: regionalAdmin.name,
-        region: regionalAdmin.region
-      },
-      is_read: false
-    });
+//     // Create a notification
+//     await Notification.create({
+//       user_id: superAdmin._id,
+//       title: "New Regional Admin Registration",
+//       message: `A new regional admin "${regionalAdmin.name}" has registered for ${regionalAdmin.region} region and needs approval.`,
+//       type: "approval_request",
+//       data: {
+//         admin_id: regionalAdmin._id,
+//         admin_name: regionalAdmin.name,
+//         region: regionalAdmin.region
+//       },
+//       is_read: false
+//     });
     
-    // Optionally, send an email notification
-    // await sendEmail(superAdmin.e_mail, "New Regional Admin Registration", `A new regional admin has registered...`);
-  } catch (error) {
-    console.error("Error notifying super admin:", error);
-  }
-}
+//     // Optionally, send an email notification
+//     // await sendEmail(superAdmin.e_mail, "New Regional Admin Registration", `A new regional admin has registered...`);
+//   } catch (error) {
+//     console.error("Error notifying super admin:", error);
+//   }
+// }
 
 // Super Admin functions
 exports.createSuperAdmin = async (req, res) => {

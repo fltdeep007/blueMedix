@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "bluemedixauth",
+  "private_key_id": "5c9321362b725f7356971fdd66c95d69b9b3a97b",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCszIb01s4SL07t\nfStSWXHVTJhAwWtyIgEdWGrVk1zrJxvY2rz0EV/8R5ksyHZkqlqwij/JL53ZTXTl\nV5YttpA2+SbFKxMitfR0GcMMpC92Wwcx4pK0d0020vp9HoUcrgrcdcfaJd56aaWs\noTNcBAgqi6rJ2n6WDkIgwBkn56eAhF93tYk/amBbwR7lxYgDy8c9vok+srfRlzvR\ne2LE048PrrajtivXBV3FBK1lBRkjmfrcq6v/RwJs8GKQDfjNjUiQpsPprvY+1TXf\nrF3c1NmEnB6qd+KPb98L+f8JnsiFLUvWoGIaiBtKONcHFBxxi1HKpwnX8Ua7HAja\namoFtxTxAgMBAAECggEARkGqJWYoxvABMUIRGRxQ0h6gUMPTgcYdmebXGRsfTmTK\nR7M33CwsUJBz0Od4a5lv4hNzt8LqdO2vN4gTAWcW36MRhlzrHNPKHmJTEZK30XFV\nTY0HhOR0unOxcKm2CWEh/VzN8v4upKrLt5KbJTBmeZXrzMJPcYc+j75K/BSN4AxH\nEnkj30W0fvUOj2oxUVPMWMAoreYWwG6kkpetATL+6k4LfJEKZoOyrBYOa/7x+Y2A\nEHV0AyIMOWrzBRTuI8xNKO1KqT5ZOeuOvIyEnDaqEgr17KcBPDQfbQcBqROvKzb9\ndeL+vVaPpHMcmQ04zSCgmtoIUDvvTudRvbygJa7D+QKBgQDUhtVlomaGf90+qBh5\naXBFS/MFO3QBeRMtRrqmhLK3e8Z6qxVsSCUb11rNw/7eNcBNBM9m9oI3zK5bzhPp\nBEZIivJZDBKfAPHiZdeUGkWKe8LGKG7sjP4mQxsworuSpWfzyH+xSlBoVJ9vpozR\nyVMaTlRGju0OUyhCldyYBTO/KwKBgQDQJU+Z9DJzCKBvsdx47G7Ig/oeBPxz/eKQ\nsRp5B0V72kNLruBIWmscthFhGTNKFbnrqGxqTjX0RRJtSb/sxQu7brqguEkiw2ed\nQpOK3NVh+UF9ooS5pNrK2tUE7tbVbQmH9/zeO/FmzRFaMa8u42NCuzoKkeVsWuY4\nx0T1ZJNOUwKBgCs8pyt/J6aTWtqFbj09Izcl5XIaD1bBYBJlAlIgSw+jIdUQ+1HF\nN697V6DnD/H7M303zk4fNozNmmdY/Jn6YaYehoFxQFSS56LsnzglRCKRXSXdUfvU\nD1yPaHezk7+Y4RYqozfZa5ReKvWXB60ibUK7zs9wAnBYoKczP+a5oDZzAoGAc+Bh\nqV7Gez4ROz10dSmDH0RCCVZTSSvNZyoBh+FhcGr5TfgESqNzwB8oG7tQz2y6/ZPd\nD22NIfkWIhuNqn2kY2tooLMXnC/WzjjTNNpuPMXsDMpeQ4+gcpBTSRTCKz0xsi1/\n7CTI5qdBgsnoMh1LFEpxLJM+ew07394n6MleLJsCgYEAj5jTWBFLKzts26HwT8ua\n7KPOqzNpkbne7rSt5xm716u0Ir2Q/jV7AEGnOfFKxGm51zOQ1Onc7gWAtMv3VXTL\nVZ5JT4UwkGPD0cDV9Cism9/MiiqhiHcxTYgGjV6TdC4zPZ5w4aUwZYsewVbxKOzk\nujO8DEw0XABVXw4sUk/kKuw=\n-----END PRIVATE KEY-----\n",
+  "client_email": "firebase-adminsdk-fbsvc@bluemedixauth.iam.gserviceaccount.com",
+  "client_id": "108802715159405262731",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40bluemedixauth.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

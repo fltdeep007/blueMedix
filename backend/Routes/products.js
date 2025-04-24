@@ -1,7 +1,7 @@
 const express = require("express");
 const fs = require("fs");
 const router = express.Router();
-const { getAllProducts, getProductById, addProduct, deleteProduct, updateProduct, getProductByCategory } = require("../Controllers/productController"); 
+const { getAllProducts, getProductById, addProduct, deleteProduct, updateProduct, getProductByCategory , getAllCategories } = require("../Controllers/productController"); 
 
 /**
  * Route: GET /
@@ -11,6 +11,7 @@ const { getAllProducts, getProductById, addProduct, deleteProduct, updateProduct
  *   - JSON array containing all the products.
  */
 router.get("/", getAllProducts); // Return all products
+router.get("/cat" , getAllCategories)
 
 /**
  * Route: GET /:id
