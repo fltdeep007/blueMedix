@@ -80,7 +80,7 @@ const getProductByCategory = async (categoryId) => {
       }
   
       
-      const products = await Product.find().populate('category', 'name');
+      const products = await Product.find({ category: categoryId }).populate('category', 'name');
 
       const formattedProducts = products.map(product => {
         const prod = product.toObject(); // convert Mongoose doc to plain object

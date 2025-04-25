@@ -2,7 +2,7 @@
 node_modules/
 backend/.env
 .env.*.local
-
+backend/config/key.json
 # Logs
 logs
 *.log

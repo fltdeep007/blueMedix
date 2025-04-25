@@ -267,20 +267,9 @@ exports.registerUser = async (req, res) => {
           continue;
       }
 
-      const newToken = jwt.sign(
-        {
-          phone_no: newUser.phone_no,
-          user_id: newUser._id,
-          role: newUser.role,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-
       results.push({
         success: true,
         message: "User registered successfully",
-        token: newToken,
         user: {
           id: newUser._id,
           name: newUser.name,
