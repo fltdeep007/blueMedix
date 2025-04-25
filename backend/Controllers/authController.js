@@ -515,7 +515,8 @@ exports.loginUser = async (req, res) => {
       {
         user_id: user._id,
         role: user.role,
-        phone_no: user.phone_no
+        phone_no: user.phone_no,
+        region:user.region
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -531,6 +532,7 @@ exports.loginUser = async (req, res) => {
         name: user.name,
         role: user.role,
         phone_no: user.phone_no,
+        region:user.region,
         verification_status: 
           user.role === "Seller" ? user.verification_status : null,
       }

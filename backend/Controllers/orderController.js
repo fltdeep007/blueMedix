@@ -1,4 +1,6 @@
 const orderService = require('../Services/orderService');
+const Seller = require("../Models/User/Roles/Seller")
+const Order = require("../Models/Products/Order")
 
 // Place an order - finds seller with matching pincode
 const path = require('path');
@@ -284,6 +286,64 @@ const getSellerOrderById = async (req, res) => {
     });
   }
 };
+const getOrdersByRegion = async (req, res) => {
+  const { region, status = null } = req.query; // Get region from req.params
+
+  if (!region) {
+    return res.status(400).json({
+      success: false,
+      message: "Region is required",
+    });
+  }
+
+  try {
+    // Step 1: Get sellers in region with just _id
+    const sellers = await Seller.find({ region }).select('_id').lean();
+
+    if (!sellers.length) {
+      return res.json({ success: true, orders: [] });
+    }
+
+    const sellerIds = sellers.map(s => s._id);
+
+    // Step 2: Get orders for those sellers
+    let orders = await Order.find({ seller: { $in: sellerIds } })
+      .populate([
+        {
+          path: 'customer',
+          select: 'name e_mail phone_no address'
+        },
+        {
+          path: 'items.product',
+          select: 'name price description category'
+        }
+      ])
+      .lean();
+
+    // Step 3: Optional filter
+    if (status) {
+      orders = orders.filter(order => order.status === status);
+    }
+
+    // Step 4: Sort by newest
+    orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+    return res.json({
+      success: true,
+      orders
+    });
+
+  } catch (error) {
+    console.error("Error fetching orders by region:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders by region",
+      error: error.message
+    });
+  }
+};
+
+
 
 module.exports = {
   placeOrder,
@@ -294,5 +354,6 @@ module.exports = {
   getOrdersBySellerId,
   getOrders,
   cancelOrder,
-  getSellerOrderById
+  getSellerOrderById,
+  getOrdersByRegion
 };

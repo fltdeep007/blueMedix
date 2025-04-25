@@ -1,4 +1,5 @@
 const productService = require('../Services/productService');
+const Product = require('../Models/Products/Product');
 
 const getAllProducts = async (req, res) => {
     const result = await productService.getAllProducts();
@@ -81,6 +82,8 @@ const getAllCategories  = async(req,res) =>{
     }
 }
 
+
+  
 module.exports = {
     getAllProducts,
     getProductById,
@@ -88,6 +91,7 @@ module.exports = {
     deleteProduct,
     updateProduct, 
     getProductByCategory,
-    getAllCategories
+    getAllCategories,
+   
 };
 

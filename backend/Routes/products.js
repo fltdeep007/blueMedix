@@ -59,7 +59,8 @@ router.put("/:productId", updateProduct);
 router.delete("/delete/:productId", deleteProduct); // Delete a product
 
 
-router.get("/category/:categoryId", getProductByCategory); // Get products by category
+router.get("/category/:categoryId", getProductByCategory);
+// Get products by category
 /**
  * Route: POST /import
  * Functionality: Simulates importing products (not implemented).

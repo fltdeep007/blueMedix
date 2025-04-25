@@ -1,6 +1,6 @@
 const User = require("../Models/User/User");
 
-exports.getSellersPendingApproval = async (req, res) => {
+exports.getSellers = async (req, res) => {
   try {
     // Ensure user is a regional admin
     if (req.user.role !== 'RegionalAdmin') {
@@ -22,15 +22,14 @@ exports.getSellersPendingApproval = async (req, res) => {
     }
 
     // Find all sellers in the admin's region with pending verification
-    const pendingSellers = await User.find({
+    const allSellers = await User.find({
       role: "Seller",
-      region: admin.region,
-      verification_status: "pending",
+      region: admin.region
     }).lean(); // Use lean() to get plain JavaScript objects instead of Mongoose documents
 
     return res.status(200).json({
       success: true,
-      sellers: pendingSellers.map((seller) => {
+      sellers: allSellers.map((seller) => {
         // Safely extract properties
         return {
           id: seller._id,
@@ -39,7 +38,8 @@ exports.getSellersPendingApproval = async (req, res) => {
           e_mail: seller.e_mail || "",
           desc: seller.desc || "",
           region: seller.region || "",
-          address: seller.address || {}
+          address: seller.address || {},
+          status:seller.verification_status
         };
       }),
     });

@@ -110,6 +110,7 @@ const getProductByCategory = async (categoryId) => {
         
     }
   }
+  
 
 
 module.exports = {
