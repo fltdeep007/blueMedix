@@ -21,7 +21,7 @@ connectDB();
 app.use('/uploads', express.static(path.join(__dirname, 'Controllers', 'uploads')));
 
 app.use('/api/regional-admin', require('./Routes/regionalAdmin')); // For RegionalAdmin endpoints approval / deny / view etc
-app.use('/api/regionalAdmin' , require('./Routes/superAdmin') ); // For super admin to view / reject / accept regional admin signups
+app.use('/api/superAdmin' , require('./Routes/superAdmin') ); // For super admin to view / reject / accept regional admin signups
 app.use('/api/auth' , require('./Routes/auth'));
 // app.use('/api/login', cartRoutes);
 app.use('/api/cart', require('./Routes/cart'));  // working all

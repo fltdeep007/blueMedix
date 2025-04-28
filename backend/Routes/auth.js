@@ -4,7 +4,7 @@ const authController = require('../Controllers/authController')
 const { authenticate } = require('../middleware/authMiddleware');  // to get token and pass user role 
 const User = require("../Models/User/User")
 const { getCustomersInSellerPincode , getUsersInRegionalAdminRegion , getSellersInRegionalAdminRegion} = require('../Controllers/userController')
-
+const userController  = require("../Controllers/userController")
 
 router.post('/login/otp', authController.requestOTP); 
 router.post('/verify/otp', authController.verifyOTP);
@@ -14,7 +14,8 @@ router.post('/check' , authController.checkUserEmail)
 
 router.post('/register/SuperAdmin', authController.createSuperAdmin);
 
-
+router.put('/user/:id' , userController.updateUser)
+router.delete('/user/:id' , userController.deleteUserById)
 
 
 
@@ -58,6 +59,7 @@ router.get("/me", authenticate, async (req, res) => {
 router.get('/seller/:sellerId' , getCustomersInSellerPincode)
 router.get('/regAdmin/customer/:regAdminId' , getUsersInRegionalAdminRegion)
 router.get('/regAdmin/seller/:regAdminId' , getSellersInRegionalAdminRegion)
+
 
 // router.post('/super-admin/create', authController.createSuperAdmin); // Developer only
 // router.get('/super-admin/regional-admins', auth(['SuperAdmin']), authController.getRegionalAdmins);

@@ -1,4 +1,4 @@
-const {createUser, getAllUsers, updateUser, deleteUser} = require('../Services/userService');
+const {createUser, getAllUsers, updateUserById , deleteUser} = require('../Services/userService');
 const User = require('../Models/User/User');
 const mongoose = require('mongoose');
 
@@ -14,30 +14,29 @@ const mongoose = require('mongoose');
 const getUsers = async (req, res) => {
     try {
         const users = await getAllUsers();
-        res.status(200).json(users);
+        res.status(200).json({success:true , count: users.length , users});
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
 
-// const updateUser = async (req, res) => {
-//     try {
-//         const user = await updateUser(req.params.id, req.body);
-//         res.status(200).json(user);
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-// };
+const updateUser = async (req, res) => {
+  try {
+    const user = await updateUserById(req.params.id, req.body);
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+};
 
-// const deleteUser = async (req, res) => {
-//     try {
-//         await deleteUser(req.params.id);
-//         res.status(200).json({ message: 'User deleted successfully' });
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-
+const deleteUserById = async (req, res) => {
+  try {
+    const result = await deleteUser(req.params.id);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(404).json({ message: error.message });
+  }
+};
 const getUserById = async (req, res) => {
     try {
         const user = await getUserById(req.params.id);
@@ -243,15 +242,25 @@ const getUsersInRegionalAdminRegion = async (req, res) => {
       });
     }
   };
+  const getAllSellers = async (req, res) => {
+    try {
+      const sellers = await User.find({ role: "Seller" });
+      res.status(200).json({ success: true, count: sellers.length, sellers });
+    } catch (error) {
+      console.error("Error fetching sellers:", error);
+      res.status(500).json({ success: false, message: "Failed to fetch sellers" });
+    }
+  };
 
 
 module.exports = {
     createUser,
     getUsers,
     updateUser,
-    deleteUser,
+    deleteUserById,
     getUserById,
     getCustomersInSellerPincode,
     getUsersInRegionalAdminRegion,
-    getSellersInRegionalAdminRegion
+    getSellersInRegionalAdminRegion,
+    getAllSellers
 };

@@ -9,31 +9,51 @@ const createUser = async (userData) => {
     }
 };
 
-const updateUser = async (userId, userData) => {
+const updateUserById = async (userId, userData) => {
     try {
-        const user = await User.findByIdAndUpdate(userId, userData, { new: true });
-        if (!user) {
-            throw new Error('User not found');
+      const { name, e_mail, phoneNumber, gender, dob } = userData;
+      const updateFields = {};
+  
+      if (name) {
+        updateFields.name = name;
+      }
+      if (e_mail) {
+        updateFields.e_mail = e_mail;
+      }
+      if (phoneNumber) {
+        if (!/^\d{10}$/.test(phoneNumber)) {
+          throw new Error('Invalid phone number format. Must be 10 digits.');
         }
-        return user;
-    }
-    catch (error) {
-        throw new Error('Error updating user');
-    }
-};
-
-const deleteUser = async (userId) => {
-    try {
-        const user = await User.findByIdAndDelete(userId);
-        if (!user) {
-            throw new Error('User not found');
-        }
-        return user;
+        updateFields.phoneNumber = phoneNumber;
+      }
+      if (gender) {
+        updateFields.gender = gender;
+      }
+      if (dob) {
+        updateFields.dob = dob;
+      }
+  
+      const user = await User.findByIdAndUpdate(userId, { $set: updateFields }, { new: true, runValidators: true });
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return user;
     } catch (error) {
-        throw new Error('Error deleting user');
+      throw new Error(`Error updating user: ${error.message}`);
     }
-};
-
+  };
+  
+  const deleteUser = async (userId) => {
+    try {
+      const user = await User.findByIdAndDelete(userId);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      return { message: 'User deleted successfully' };
+    } catch (error) {
+      throw new Error('Error deleting user');
+    }
+  };
 const getUserById = async (userId) => {
     try{
         const user = await User.findById(userId);
@@ -49,7 +69,7 @@ const getUserById = async (userId) => {
 
 const getAllUsers = async () => {
     try {
-        const users = await User.find();
+      const users = await User.find({ role: "Customer" });
         return users;
     } catch (error) {
         throw new Error('Error retrieving users');
@@ -58,8 +78,8 @@ const getAllUsers = async () => {
 
 module.exports = {
     createUser,
-    updateUser,
-    deleteUser,
+    updateUserById,
     getUserById,
-    getAllUsers
+    getAllUsers,
+    deleteUser
 };

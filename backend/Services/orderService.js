@@ -389,6 +389,7 @@ const getOrders = async () => {
       .sort({ createdAt: -1 });
     
     return {
+      count: orders.length ,
       success: true,
       orders
     };

@@ -4,27 +4,21 @@ const User = require("../Models/User/User");
 
 exports.getRegionalAdmins = async (req, res) => {
     try {
-      // Verify super admin
-      if (req.user.role !== "SuperAdmin") {
-        return res.status(403).json({
-          success: false,
-          message: "Access denied",
-        });
-      }
-      
       // Find all approved regional admins using the User model
       const regionalAdmins = await User.find({
         role: "RegionalAdmin",
-        verification_status: "approved"
+        
       });
       
       return res.status(200).json({
         success: true,
+        count: regionalAdmins.length,
         admins: regionalAdmins.map((admin) => ({
           id: admin._id,
           name: admin.name,
           email: admin.e_mail,
           region: admin.region,
+          Verification: admin.verification_status,
           sellers_count: admin.sellers ? admin.sellers.length : 0,
         })),
       });
@@ -54,8 +48,8 @@ exports.approveRegionalAdmin = async (req, res) => {
       // Find the regional admin by ID
       const admin = await User.findOne({ 
         _id: adminId, 
-        role: "RegionalAdmin",
-        verification_status: "pending" 
+        role: "RegionalAdmin"
+        
       });
   
       if (!admin) {
@@ -108,13 +102,13 @@ exports.approveRegionalAdmin = async (req, res) => {
       }
   
       const { adminId } = req.params;
-      const { reason } = req.body; // Optional reason for rejection
+      const { reason } = req.params; // Optional reason for rejection
   
       // Find the regional admin by ID
       const admin = await User.findOne({ 
         _id: adminId, 
         role: "RegionalAdmin",
-        verification_status: "pending" 
+        // verification_status: "pending" 
       });
   
       if (!admin) {
