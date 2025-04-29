@@ -6,6 +6,11 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+
+const invoiceRoutes = require('./routes/invoice');
+app.use('/invoice', invoiceRoutes);
+
+
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
 
