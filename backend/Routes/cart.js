@@ -52,6 +52,20 @@ router.delete('/:userId/:productId', deleteCartItem);
  */
 router.put('/:userId/:productId', updateCartItemQuantityController);
 
-router.get('/top/top-products', getTopSellingDeliveredProductsLast30Days);
+router.get('/top/top-products', async (req, res) => {
+  try {
+    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+    const result = await getTopSellingDeliveredProductsLast30Days(limit);
+
+    if (result.success) {
+      return res.status(200).json(result.topProducts); //  Return only the topProducts array
+    } else {
+      return res.status(400).json({ message: result.message }); //  Return only the error message
+    }
+  } catch (error) {
+    console.error("Error in /top/delivered-products endpoint:", error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 module.exports = router;

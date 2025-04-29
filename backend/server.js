@@ -30,6 +30,7 @@ app.use('/api/products', require('./Routes/products'));
 app.use('/api/seller', require('./Routes/seller'));
 app.use('/api/analytics', require('./Routes/cart'));
 app.use('/api/userData' , require('./Routes/auth'));
+app.use('/api/specialProducts' , require('./Routes/special'))
 
 app.get('/', (req, res) => {
   res.send('Server is running!');

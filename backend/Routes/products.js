@@ -22,7 +22,7 @@ router.get("/cat" , getAllCategories)
  *   - JSON object containing the details of the product.
  *   - If the product is not found, returns 404 with a "Not found" message.
  */
-router.get("/:productId", getProductById); 
+router.get("/product/:productId", getProductById); 
 
 /**
  * Route: POST /create
