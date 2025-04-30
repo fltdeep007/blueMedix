@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Order = require('../models/Order'); // Your MongoDB Order model
+const Order = require('../Models/Products/Order'); // Your MongoDB Order model
 
 // @route   GET /invoice/:orderId
 // @desc    Generate invoice details for a given order
@@ -8,22 +8,30 @@ const Order = require('../models/Order'); // Your MongoDB Order model
 
 router.get('/:orderId', async (req, res) => {
   try {
-    const order = await Order.findById(req.params.orderId).populate('userId', 'name email');
-    if (!order) return res.status(404).json({ message: 'Order not found' });
+    const order = await Order.findById(req.params.orderId)
+      .populate('customer', 'name email') // Populate customer details
+      .populate('items.product', 'name'); // Populate product name in items
+
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
 
     const invoice = {
       orderId: order._id,
-      customerName: order.userId.name,
-      customerEmail: order.userId.email,
+      customerName: order.customer ? order.customer.name : 'Guest Customer',
+      customerEmail: order.customer ? order.customer.email : 'N/A',
       orderDate: order.createdAt,
       status: order.status,
-      items: order.products.map((p) => ({
-        name: p.productName || 'Medicine',
-        quantity: p.quantity,
-        price: p.price,
-        total: p.price * p.quantity,
+      items: order.items.map((item) => ({
+        name: item.product ? item.product.name : 'Product Details Not Available',
+        quantity: item.quantity,
+        price: item.price,
+        total: item.price * item.quantity,
       })),
       totalAmount: order.totalAmount,
+      shippingAddress: order.shippingAddress,
+      paymentMethod: order.payment_method,
+      paymentStatus: order.payment_status,
     };
 
     res.json({ success: true, invoice });

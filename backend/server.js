@@ -43,6 +43,7 @@ app.use('/api/products', require('./Routes/products'));
 app.use('/api/seller', require('./Routes/seller'));
 app.use('/api/analytics', require('./Routes/cart'));
 app.use('/api/userData', require('./Routes/auth'));
+app.use('/api/order/invoice' , require('./Routes/invoice'))
 //app.use('/api/specialProducts', require('./Routes/special'));
 
 // Root route
