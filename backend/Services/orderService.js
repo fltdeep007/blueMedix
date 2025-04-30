@@ -110,19 +110,21 @@ const createOrderFromCartWithPincodeMatching = async (userId, products, prescrip
       { new: true }
     );
 
-    // Create transaction records for each product in the order
-    const transactionPromises = orderItems.map(item => {
-      const transaction = new Transaction({
-        order: savedOrder._id,
-        product: item.product,
-        quantity: item.quantity,
-        eventId: 'order_placed',
-        timestamp: new Date()
-      });
-      return transaction.save();
-    });
+    // Create a single transaction record with products array
+    const productsData = orderItems.map(item => ({
+      productId: item.product,
+      quantity: item.quantity
+    }));
 
-    await Promise.all(transactionPromises);
+    // Create single transaction with products array
+    const transaction = new Transaction({
+      order: savedOrder._id,
+      products: productsData,  // Using the new schema structure
+      eventId: 'order_placed',
+      timestamp: new Date()
+    });
+    
+    await transaction.save();
 
     return {
       success: true,
@@ -194,14 +196,14 @@ const updateOrderStatus = async (orderId, status) => {
   try {
     // Valid status transitions
     const validStatuses = ['pending', 'accepted', 'rejected', 'dispatched', 'delivered', 'cancelled'];
-
+    
     if (!validStatuses.includes(status)) {
       return {
         success: false,
         message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`
       };
     }
-
+    
     const order = await Order.findById(orderId).populate('items.product');
     if (!order) {
       return {
@@ -209,9 +211,9 @@ const updateOrderStatus = async (orderId, status) => {
         message: "Order not found"
       };
     }
-
+    
     const currentStatus = order.status;
-
+    
     // Define allowed transitions
     const allowedTransitions = {
       'pending': ['accepted', 'rejected'],
@@ -221,17 +223,17 @@ const updateOrderStatus = async (orderId, status) => {
       'delivered': [],
       'cancelled': []
     };
-
+    
     if (!allowedTransitions[currentStatus].includes(status)) {
       return {
         success: false,
         message: `Cannot change order status from '${currentStatus}' to '${status}'`
       };
     }
-
+    
     // Update order status
     order.status = status;
-
+    
     // Add tracking entry
     let description;
     switch (status) {
@@ -253,52 +255,57 @@ const updateOrderStatus = async (orderId, status) => {
       default:
         description = `Order status updated to ${status}`;
     }
-
+    
     order.tracking.push({
       status,
       timestamp: new Date(),
       description
     });
-
+    
     await order.save();
-
-    // Create transaction records for each product in the order
-    const transactionPromises = order.items.map(item => {
-      // IMPORTANT:  Use the status, but check if it's a valid eventId.
-      let eventId;
-      switch (status) {
-        case 'accepted':
-          eventId = 'order_accepted';
-          break;
-        case 'dispatched':
-          eventId = 'order_dispatched';
-          break;
-        case 'delivered':
-          eventId = 'order_delivered';
-          break;
-        case 'cancelled':
-          eventId = 'order_cancelled';
-          break;
-        default:
-          eventId = 'order_placed'; //  Default case
-      }
-      if (!['order_placed', 'order_accepted', 'order_dispatched', 'order_cancelled', 'order_delivered'].includes(eventId)) {
-        // This should NEVER happen, but it's good to have a fallback.
-        console.error(`Invalid eventId: ${eventId} for order ${order._id}.  Using 'order_placed' instead.`);
-        eventId = 'order_placed'; // Or you could throw an error here.
-      }
-
-      const transaction = new Transaction({
-        order: order._id,
-        product: item.product._id,
-        quantity: item.quantity,
-        eventId: eventId, // Use the validated eventId
-        timestamp: new Date()
-      });
-      return transaction.save();
+    
+    // Map status to eventId
+    let eventId;
+    switch (status) {
+      case 'accepted':
+        eventId = 'order_accepted';
+        break;
+      case 'dispatched':
+        eventId = 'order_dispatched';
+        break;
+      case 'delivered':
+        eventId = 'order_delivered';
+        break;
+      case 'cancelled':
+        eventId = 'order_cancelled';
+        break;
+      default:
+        eventId = 'order_placed'; // Default case
+    }
+    
+    // Validate eventId
+    if (!['order_placed', 'order_accepted', 'order_dispatched', 'order_cancelled', 'order_delivered'].includes(eventId)) {
+      // This should NEVER happen, but it's good to have a fallback
+      console.error(`Invalid eventId: ${eventId} for order ${order._id}. Using 'order_placed' instead.`);
+      eventId = 'order_placed';
+    }
+    
+    // Create a single transaction with products array
+    const productsData = order.items.map(item => ({
+      productId: item.product._id,
+      quantity: item.quantity
+    }));
+    
+    // Create a single transaction for all products
+    const transaction = new Transaction({
+      order: order._id,
+      products: productsData,
+      eventId: eventId,
+      timestamp: new Date()
     });
-    await Promise.all(transactionPromises);
-
+    
+    await transaction.save();
+    
     return {
       success: true,
       message: `Order status updated to ${status}`,

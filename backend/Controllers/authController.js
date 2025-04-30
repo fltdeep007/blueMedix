@@ -471,7 +471,7 @@ exports.createSuperAdmin = async (req, res) => {
 exports.loginUser = async (req, res) => {
   try {
     const { e_mail, password } = req.body;
-
+    
     // Validate request body
     if (!e_mail || !password) {
       return res.status(400).json({
@@ -479,10 +479,10 @@ exports.loginUser = async (req, res) => {
         message: "Email and password are required"
       });
     }
-
+    
     // Find user by email
     const user = await User.findOne({ e_mail });
-
+    
     // Check if user exists
     if (!user) {
       return res.status(401).json({
@@ -490,17 +490,17 @@ exports.loginUser = async (req, res) => {
         message: "Invalid email or password"
       });
     }
-
+    
     // Compare passwords
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    
+        
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password"
       });
     }
-
+    
     // Check if user is verified (for seller and regional admin roles)
     if (user.role !== "Customer" && !user.is_verified) {
       return res.status(403).json({
@@ -510,31 +510,38 @@ exports.loginUser = async (req, res) => {
       });
     }
 
-    // Generate JWT token
+    // Convert user document to a plain JavaScript object
+    const userObject = user.toObject();
+    
+    // Generate JWT token with safe properties
     const token = jwt.sign(
       {
-        user_id: user._id,
-        role: user.role,
-        phone_no: user.phone_no,
-        region:user.region
+        user_id: userObject._id,
+        role: userObject.role,
+        phone_no: userObject.phone_no,
+        region: userObject.region,
+        email: userObject.e_mail
+        // Don't include address in the token
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-
+    
     // Return success response with token and basic user info
     return res.status(200).json({
       success: true,
       message: "Login successful",
       token: `Bearer ${token}`,
       user: {
-        id: user._id,
-        name: user.name,
-        role: user.role,
-        phone_no: user.phone_no,
-        region:user.region,
-        verification_status: 
-          user.role === "Seller" ? user.verification_status : null,
+        id: userObject._id,
+        name: userObject.name,
+        role: userObject.role,
+        phone_no: userObject.phone_no,
+        region: userObject.region,
+        email: userObject.e_mail,
+        verification_status: userObject.verification_status,
+        // Only include address if it exists
+        ...(userObject.address ? { address: userObject.address } : {})
       }
     });
   } catch (error) {

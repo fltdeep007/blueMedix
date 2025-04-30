@@ -1,5 +1,9 @@
 
 const User = require("../Models/User/User");
+const Products = require("../Models/Products/Product")
+const Category = require('../Models/Products/Category')
+const Orders = require("../Models/Products/Order")
+const { getOrderEventCountsLast24Hours , getOrderEventCountsLast7Days, getLast10Orders } = require('../Controllers/customerController')
 
 
 exports.getRegionalAdmins = async (req, res) => {
@@ -183,6 +187,94 @@ exports.approveRegionalAdmin = async (req, res) => {
       return res.status(500).json({
         success: false,
         message: "Internal server error",
+        error: error.message,
+      });
+    }
+  };
+
+  exports.getCount = async (req, res) => {
+    try {
+      const customerCount = await User.countDocuments({ role: "Customer" });
+      const categoryCount = await Category.countDocuments();
+      const orderCount = await Orders.countDocuments();
+      const productCount = await Products.countDocuments();
+  
+      return res.status(200).json({
+        customerCount,
+        categoryCount,
+        orderCount,
+        productCount,
+      });
+    } catch (error) {
+      console.error("Error fetching counts:", error);
+      return res.status(500).json({ message: "Failed to fetch counts" });
+    }
+  };
+
+  exports.handleOrdersCount = async (req, res) => {
+    try {
+      const result = await getOrderEventCountsLast24Hours();
+      if(result.success){
+          return res.status(200).json(result);
+      }
+       else{
+          return res.status(500).json(result)
+       }
+  
+    } catch (error) {
+      console.error("Error in handleOrdersCount:", error);
+      return res.status(500).json({ 
+          success: false,
+          message: "An error occurred while handling order counts.",
+          error: error.message
+       });
+    }
+  };
+
+  exports.handleOrderEventsLast7Days = async (req, res) => {
+    try {
+      // Get counts
+      const countsResult = await getOrderEventCountsLast7Days();
+      if (!countsResult.success) {
+        return res.status(500).json(countsResult); // Return error from count retrieval
+      }
+  
+      // // Get details
+      // const detailsResult = await getOrderEventDetailsLast7Days();
+      // if (!detailsResult.success) {
+      //   return res.status(500).json(detailsResult); // Return error from detail retrieval
+      // }
+  
+      // Combine the results into a single response
+      return res.status(200).json({
+        success: true,
+        message: "Order event data for the last 7 days retrieved successfully.",
+        eventCounts: countsResult.eventCounts
+        // orderEvents: detailsResult.orderEvents,
+      });
+    } catch (error) {
+      console.error("Error in handleOrderEventsLast7Days:", error);
+      return res.status(500).json({
+        success: false,
+        message: "An error occurred while handling order events for the last 7 days.",
+        error: error.message,
+      });
+    }
+  };
+
+  exports.handleLast10Orders = async (req, res) => {
+    try {
+      const result = await getLast10Orders();
+      if (result.success) {
+        return res.status(200).json(result);
+      } else {
+        return res.status(500).json(result);
+      }
+    } catch (error) {
+      console.error("Error in handleLast10Orders:", error);
+      return res.status(500).json({
+        success: false,
+        message: "An error occurred while handling the request for the last 10 orders.",
         error: error.message,
       });
     }

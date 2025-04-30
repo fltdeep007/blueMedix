@@ -4,8 +4,7 @@ const adminController = require('../Controllers/adminController');
 const { authenticate } = require('../middleware/authMiddleware');
 const { getAllSellers , getUsers} = require('../Controllers/userController')
 const { authorizeRole } = require('../middleware/authMiddleware');
-// const Category = require('../Models/Products/Category');
-const { updateCategory } = require('../Services/categoryService');
+const { getOrderEventCountsLast24Hours } = require('../Controllers/customerController')
 const { updCat } = require('../Controllers/categoryController');
 // const { getAllUsers } = require('../Services/userService');
 
@@ -21,4 +20,8 @@ router.get('/regional-admins', authorizeRole("SuperAdmin"), adminController.getR
 router.put('/regional-admins/:adminId/approve', adminController.approveRegionalAdmin);
 router.put('/regional-admins/:adminId/decline', adminController.declineRegionalAdmin);
 
+router.get('/dashboard/metrics/count' , adminController.getCount)
+router.get('/dashboard/metrics/todayOrdersCount' , adminController.handleOrdersCount)
+router.get('/dashboard/metrics/weeklyCount' , adminController.handleOrderEventsLast7Days)
+router.get('/dashboard/metrics/last10' ,adminController.handleLast10Orders )
 module.exports = router;

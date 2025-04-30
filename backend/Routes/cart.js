@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const {addItemToCart, deleteCartItem, getCart , updateCartItemQuantityController, getTopSellingDeliveredProductsLast30Days} = require("../Controllers/customerController");
+const {addItemToCart, deleteCartItem, getCart , updateCartItemQuantityController, getTopSellingDeliveredProductsLast30Days , clearShoppingCart} = require("../Controllers/customerController");
 const { validationResult } = require('express-validator');
 // const { getTopSellingProducts } = require('../Controllers/transactionController');
 
@@ -38,6 +38,7 @@ router.get("/:userId", getCart);
  */
 
 router.delete('/:userId/:productId', deleteCartItem);
+router.delete('/delete/cart/:userId' , clearShoppingCart)
 /**
  * Route: PUT /:userId/:productId
  * Functionality: Updates the quantity of a specific product in a user's cart.
@@ -58,14 +59,19 @@ router.get('/top/top-products', async (req, res) => {
     const result = await getTopSellingDeliveredProductsLast30Days(limit);
 
     if (result.success) {
-      return res.status(200).json(result.topProducts); //  Return only the topProducts array
+      // Return the topProducts array directly as JSON.
+      return res.status(200).json(result.topProducts);
     } else {
-      return res.status(400).json({ message: result.message }); //  Return only the error message
+      // Return a 400 status code (Bad Request) with the error message.
+      return res.status(400).json({ message: result.message });
     }
   } catch (error) {
-    console.error("Error in /top/delivered-products endpoint:", error);
+    // Handle any errors that occur during the process (e.g., database errors).
+    console.error("Error in /top/top-products endpoint:", error);
+    // Return a 500 status code (Internal Server Error) with a generic error message.
     return res.status(500).json({ message: 'Internal server error' });
   }
 });
+
 
 module.exports = router;

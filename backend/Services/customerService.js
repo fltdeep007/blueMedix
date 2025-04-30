@@ -53,6 +53,22 @@ const removeFromCart = async (userId, productId) => {
   }
 };
 
+const clearCart = async (userId) => {
+  try {
+    const customer = await Customer.findById(userId);
+    if (!customer) {
+      return { success: false, message: 'Customer not found' };
+    }
+
+    customer.cart = []; // Clear the cart array
+    await customer.save();
+
+    return { success: true, message: 'Cart cleared successfully', cart: customer.cart };
+  } catch (error) {
+    return { success: false, message: error.message };
+  }
+};
+
 const getCart = async (userId) => {
   try {
     const customer = await Customer.findById(userId).populate('cart.product');
@@ -94,7 +110,7 @@ const updateCartItemQuantity = async (userId, productId, quantityChange) => {
       if (itemIndex === -1) {
           return { success: false, message: 'Product not found in cart' };
       }
-
+      
       const currentQuantity = customer.cart[itemIndex].quantity;
       const newQuantity = currentQuantity + quantityChange;
 
@@ -186,5 +202,6 @@ module.exports = {
   addToCart,
   removeFromCart,
   getCart,
-  updateCartItemQuantity
+  updateCartItemQuantity,
+  clearCart
 };
